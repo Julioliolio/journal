@@ -1,0 +1,95 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+
+import {
+  deleteCardAction,
+  updateCardAction,
+} from "@/app/actions/cards";
+import { todayISO } from "@/lib/date";
+import type { Card } from "@/lib/db/schema";
+
+export function EditMenu({
+  card,
+  onEdit,
+  inset = false,
+}: {
+  card: Card;
+  /** Omit to hide the edit button (delete still shown). */
+  onEdit?: () => void;
+  /** True for cards that have padding:0 themselves (image card). */
+  inset?: boolean;
+}) {
+  const [pending, startTransition] = useTransition();
+  const [confirming, setConfirming] = useState(false);
+  const qc = useQueryClient();
+
+  function remove() {
+    const fd = new FormData();
+    fd.set("id", card.id);
+    fd.set("clientToday", todayISO());
+    startTransition(async () => {
+      await deleteCardAction(fd);
+      qc.invalidateQueries({ queryKey: ["canvas"] });
+    });
+  }
+
+  return (
+    <div
+      className={`edit-slot${inset ? " edit-slot-inset" : ""}`}
+      data-open={confirming || undefined}
+    >
+      <div className="edit-buttons">
+        {onEdit && (
+          <button
+            type="button"
+            className="pill pill-ghost pill-bouncy"
+            onClick={onEdit}
+            disabled={pending}
+          >
+            edit
+          </button>
+        )}
+        {confirming ? (
+          <>
+            <button
+              type="button"
+              className="pill pill-primary"
+              onClick={remove}
+              disabled={pending}
+            >
+              confirm delete
+            </button>
+            <button
+              type="button"
+              className="pill pill-ghost"
+              onClick={() => setConfirming(false)}
+              disabled={pending}
+            >
+              cancel
+            </button>
+          </>
+        ) : (
+          <button
+            type="button"
+            className="pill pill-ghost"
+            onClick={() => setConfirming(true)}
+            disabled={pending}
+          >
+            delete
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function useUpdateCard() {
+  const qc = useQueryClient();
+  return async function update(formData: FormData): Promise<void> {
+    formData.set("clientToday", todayISO());
+    await updateCardAction(formData);
+    qc.invalidateQueries({ queryKey: ["canvas"] });
+  };
+}

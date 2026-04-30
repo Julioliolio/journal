@@ -32,9 +32,19 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
+
+# local sqlite for dev
+local.db
+local.db-journal
+local.db-shm
+local.db-wal
+
+# local blob fallback (dev only — production uses Vercel Blob)
+/public/uploads/
 
 # typescript
 *.tsbuildinfo

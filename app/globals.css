@@ -1,26 +1,1578 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+  --color-canvas: #efece6;
+  --color-day: #f6f4ef;
+  --color-paper: #fcfaf4;
+  --color-paper-soft: rgba(252, 250, 244, 0.55);
+  --color-ink: #1b1a18;
+  --color-ink-soft: #6b645b;
+  --color-ink-mute: #a8a094;
+  --color-line: #e8e3da;
+  --color-line-soft: rgba(27, 26, 24, 0.06);
+  --color-night: #1b1a18;
+  --color-night-soft: #2a2825;
+  --color-night-ink: #f1ede4;
+  --color-night-ink-soft: rgba(241, 237, 228, 0.62);
+  --color-night-line: rgba(241, 237, 228, 0.12);
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --radius-day: 22px;
+  --radius-mini: 14px;
+
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* ---------- base reset ---------- */
+
+html,
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+input,
+textarea {
+  background: transparent;
+  border: 0;
+  outline: none;
+  color: inherit;
+}
+
+textarea {
+  resize: none;
+}
+
+::selection {
+  background: rgba(27, 26, 24, 0.12);
+}
+
+/* Override Chrome's accent colour for any default focus rings we accept */
+:root {
+  accent-color: var(--color-ink);
+}
+
+/* ---------- canvas shell ---------- */
+
+.canvas-root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  /* Reserve room for the floating toolbar (theme + switch) so the
+     mobile tabs / sticky half-header never sit underneath it. */
+  padding-top: 52px;
+  box-sizing: border-box;
+  background: var(--color-canvas);
+}
+
+.canvas-desktop {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 0;
+}
+
+.canvas-mobile {
+  flex: 1;
+  min-height: 0;
+}
+
+.half {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line) transparent;
+}
+
+.half::-webkit-scrollbar {
+  width: 8px;
+}
+
+.half::-webkit-scrollbar-thumb {
+  background: var(--color-line);
+  border-radius: 4px;
+}
+
+.half-inner {
+  padding: 0 24px 96px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.half-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--color-canvas);
+}
+
+/* Progressive fade-out zone below the sticky header.
+   - Backdrop blur strongest at top, none at bottom (via mask gradient)
+   - Canvas-tinted gradient on top blurs into transparent
+   - Both are masked by a luminance ramp so the effect feathers smoothly
+*/
+.half-header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 64px;
+  background: linear-gradient(
+    to bottom,
+    var(--color-canvas) 0%,
+    rgba(239, 236, 230, 0.7) 35%,
+    rgba(239, 236, 230, 0.3) 70%,
+    rgba(239, 236, 230, 0) 100%
+  );
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black 30%,
+    rgba(0, 0, 0, 0.6) 60%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black 30%,
+    rgba(0, 0, 0, 0.6) 60%,
+    transparent 100%
+  );
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.half[data-scrolled="true"] .half-header::after {
+  opacity: 1;
+}
+
+.half-header-inner {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 18px 24px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.half-header-date {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+  transition: opacity 200ms ease, background 140ms ease, color 140ms ease;
+}
+
+.half-header-date.is-clickable {
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  background: transparent;
+}
+
+.half-header-date.is-clickable:hover,
+.half-header-date.is-clickable[aria-expanded="true"] {
+  background: var(--color-day);
+  color: var(--color-ink);
+}
+
+.date-picker-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.date-picker {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 2;
+  min-width: 220px;
+  max-height: 60vh;
+  overflow-y: auto;
+  background: var(--color-paper);
+  border: 1px solid var(--color-line);
+  border-radius: 14px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  box-shadow: 0 10px 28px rgba(27, 26, 24, 0.08);
+  animation: card-enter 180ms ease-out both;
+}
+
+.date-picker-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 9px;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+  background: transparent;
+  white-space: nowrap;
+  transition: background 120ms ease, color 120ms ease;
+  cursor: pointer;
+}
+
+.date-picker-item:hover {
+  background: var(--color-line-soft);
+  color: var(--color-ink);
+}
+
+.date-picker-item.active {
+  background: var(--color-day);
+  color: var(--color-ink);
+}
+
+.date-picker-item .today-pill {
+  margin-left: 0;
+}
+
+/* ---------- name + status pills ---------- */
+
+.name-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: var(--color-day);
+  border-radius: 999px;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: var(--color-ink);
+}
+
+.name-pill .you {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+}
+
+/* Static, no animation. */
+.today-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  background: var(--color-ink);
+  color: var(--color-day);
+  border-radius: 999px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.date-pill {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+}
+
+/* ---------- floating toolbar (top-right) ---------- */
+
+.app-toolbar {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---------- mobile tabs ---------- */
+
+.mobile-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 4px 16px 12px;
+}
+
+.mobile-tab {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-ink-soft);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  transition: background 140ms ease, color 140ms ease,
+    transform 200ms cubic-bezier(0.34, 1.4, 0.55, 1);
+  transform-origin: 50% 50%;
+}
+
+.mobile-tab:hover:not([aria-selected="true"]) {
+  background: var(--color-line-soft);
+  color: var(--color-ink);
+  transform: scale(1.03);
+}
+
+.mobile-tab:active {
+  transform: scale(0.97);
+  transition-duration: 90ms;
+}
+
+.mobile-tab[aria-selected="true"] {
+  background: var(--color-day);
+  color: var(--color-ink);
+}
+
+/* ---------- masonry + day-cards ---------- */
+
+.masonry {
+  column-count: 2;
+  column-gap: 14px;
+}
+
+@media (max-width: 767px) {
+  .masonry {
+    column-count: 1;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.day-card {
+  display: block;
+  break-inside: avoid;
+  background: var(--color-day);
+  border-radius: var(--radius-day);
+  padding: 20px;
+  margin: 0 0 14px;
+  animation: card-enter 220ms ease-out both;
+}
+
+.day-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.day-card-meta {
+  margin-left: auto;
+}
+
+/* ---------- mini-cards ---------- */
+
+.mini-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.card-shell {
+  position: relative;
+  border-radius: var(--radius-mini);
+  padding: 16px 18px;
+  animation: card-enter 220ms ease-out both;
+}
+
+.card-light {
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+.card-dark {
+  background: var(--color-night);
+  color: var(--color-night-ink);
+}
+
+.card-image {
+  padding: 0;
+  overflow: hidden;
+  background: var(--color-paper);
+}
+
+.card-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Note text under a full-bleed image (note_image card). Sits below the
+   image with horizontal padding matching the rest of the card. */
+.card-image .image-note {
+  padding: 14px 18px;
+  color: var(--color-ink);
+  transition: padding-bottom 220ms ease;
+}
+
+/* When the edit menu reveals, drop the bottom padding so the buttons'
+   own padding-top is the only gap between text and pills. Scoped to
+   :has(.edit-slot) so non-editable cards (other days, other side) get
+   no hover-driven layout shift. */
+.card-image:has(.edit-slot):hover .image-note,
+.card-image:has(.edit-slot):focus-within .image-note,
+.card-image:has(.edit-slot[data-open]) .image-note {
+  padding-bottom: 0;
+}
+
+/* ---------- markdown ---------- */
+
+.markdown {
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.markdown > * {
+  margin: 0;
+}
+
+.markdown > * + * {
+  margin-top: 8px;
+}
+
+.markdown ul,
+.markdown ol {
+  padding-left: 20px;
+}
+
+.markdown li + li {
+  margin-top: 4px;
+}
+
+.markdown a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+.markdown code {
+  font-family: ui-monospace, SFMono-Regular, "JetBrains Mono", monospace;
+  background: rgba(27, 26, 24, 0.06);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.92em;
+}
+
+.card-dark .markdown code {
+  background: rgba(241, 237, 228, 0.12);
+}
+
+.markdown strong {
+  font-weight: 600;
+}
+
+/* ---------- reflection sections ---------- */
+
+.reflection-section + .reflection-section {
+  margin-top: 16px;
+}
+
+.reflection-label {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-night-ink-soft);
+  margin-bottom: 6px;
+}
+
+.reflection-body {
+  white-space: pre-wrap;
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+
+.reflection-image {
+  margin-top: 10px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(241, 237, 228, 0.04);
+}
+
+.reflection-image img,
+.reflection-image video {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.reflection-image video {
+  background: #000;
+  outline: none;
+}
+
+/* ---------- felt media picker (compose + edit) ---------- */
+
+.felt-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.felt-picker-preview {
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(241, 237, 228, 0.04);
+}
+
+.felt-picker-preview img,
+.felt-picker-preview video {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 240px;
+}
+
+.felt-picker-preview img {
+  object-fit: cover;
+}
+
+.felt-picker-preview video {
+  background: #000;
+  object-fit: contain;
+}
+
+.felt-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ---------- felt drop zone (reflection card edit mode) ---------- */
+
+.felt-drop {
+  position: relative;
+  isolation: isolate;
+  transition: outline 140ms ease, outline-offset 140ms ease;
+}
+
+.felt-drop[data-dragging] {
+  outline: 2px dashed rgba(241, 237, 228, 0.32);
+  outline-offset: -6px;
+}
+
+/* Block child pointer events while dragging so dragenter/leave on the
+   card root stays stable — without this, dragging over a textarea fires
+   dragleave on the parent and the overlay flickers. */
+.felt-drop[data-dragging] > form {
+  pointer-events: none;
+}
+
+.felt-drop-overlay {
+  position: absolute;
+  inset: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  border-radius: calc(var(--radius-mini) - 6px);
+  background: rgba(27, 26, 24, 0.55);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: 1;
+}
+
+.felt-drop-overlay-text {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-night-ink);
+  background: rgba(241, 237, 228, 0.08);
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(241, 237, 228, 0.18);
+}
+
+.felt-drop-status {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(241, 237, 228, 0.08);
+  border: 1px solid var(--color-night-line);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--color-night-ink-soft);
+  z-index: 2;
+}
+
+/* ---------- pills (composer + utility) ---------- */
+
+.composer-slot {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 220ms ease;
+}
+
+.composer-slot > .composer-pills {
+  overflow: clip;
+  overflow-clip-margin: 16px;
+  /* Without min-height: 0 the grid track inherits the pills' min-content
+     size and refuses to collapse to 0fr. */
+  min-height: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 0;
+  padding-bottom: 0;
+  opacity: 1;
+  transition: padding-top 220ms ease, padding-bottom 220ms ease;
+}
+
+/* Each pill fades in with a small per-index delay so the reveal feels
+   like a quick cascade rather than a single flash. Stagger uses an
+   animation (one-shot, doesn't touch the `transition` property) so the
+   pill's own transition for transform stays untouched — hover tilt
+   fires immediately with the bouncy curve and no inherited delay. */
+.composer-slot > .composer-pills > * {
+  opacity: 0;
+}
+
+.day-card:hover .composer-slot,
+.day-card:focus-within .composer-slot {
+  grid-template-rows: 1fr;
+}
+
+.day-card:hover .composer-slot > .composer-pills,
+.day-card:focus-within .composer-slot > .composer-pills {
+  padding-top: 4px;
+  padding-bottom: 12px;
+}
+
+.day-card:hover .composer-slot > .composer-pills > *,
+.day-card:focus-within .composer-slot > .composer-pills > * {
+  animation: composer-pill-fade-in 220ms ease forwards;
+}
+
+.day-card:hover .composer-slot > .composer-pills > *:nth-child(1),
+.day-card:focus-within .composer-slot > .composer-pills > *:nth-child(1) {
+  animation-delay: 30ms;
+}
+.day-card:hover .composer-slot > .composer-pills > *:nth-child(2),
+.day-card:focus-within .composer-slot > .composer-pills > *:nth-child(2) {
+  animation-delay: 70ms;
+}
+.day-card:hover .composer-slot > .composer-pills > *:nth-child(3),
+.day-card:focus-within .composer-slot > .composer-pills > *:nth-child(3) {
+  animation-delay: 110ms;
+}
+.day-card:hover .composer-slot > .composer-pills > *:nth-child(4),
+.day-card:focus-within .composer-slot > .composer-pills > *:nth-child(4) {
+  animation-delay: 150ms;
+}
+
+@keyframes composer-pill-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Disabled pills (eg "+ reflection" when one already exists today)
+   fade in to a dimmed end-state. The animation's forwards fill mode
+   would otherwise force opacity:1 and shadow the .pill:disabled rule. */
+@keyframes composer-pill-fade-in-disabled {
+  from { opacity: 0; }
+  to { opacity: 0.45; }
+}
+
+.day-card:hover .composer-slot > .composer-pills > *:disabled,
+.day-card:focus-within .composer-slot > .composer-pills > *:disabled {
+  animation-name: composer-pill-fade-in-disabled;
+}
+
+@media (hover: none) {
+  .composer-slot > .composer-pills > *:disabled {
+    opacity: 0.45;
+  }
+}
+
+@media (hover: none) {
+  .composer-slot {
+    grid-template-rows: 1fr;
+  }
+  .composer-slot > .composer-pills {
+    padding-top: 4px;
+    padding-bottom: 12px;
+  }
+  .composer-slot > .composer-pills > * {
+    opacity: 1;
+    animation: none;
+  }
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  border: 1px solid var(--color-line);
+  transition: background 140ms ease, color 140ms ease,
+    border-color 140ms ease,
+    transform 220ms cubic-bezier(0.34, 1.45, 0.55, 1);
+  white-space: nowrap;
+  transform-origin: 50% 50%;
+}
+
+.pill:hover:not(:disabled) {
+  background: var(--color-ink);
+  color: var(--color-paper);
+  border-color: var(--color-ink);
+}
+
+/* Bouncy tilt — opt-in for additive actions only (compose pills, save). */
+.pill-bouncy:hover:not(:disabled) {
+  transform: translateY(-1px) rotate(-4deg) scale(1.08);
+}
+
+.pill-bouncy:active:not(:disabled) {
+  transform: translateY(0) rotate(-4deg) scale(0.96);
+  transition-duration: 90ms;
+  transition-timing-function: ease-out;
+}
+
+.pill:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pill-primary {
+  background: var(--color-ink);
+  color: var(--color-paper);
+  border-color: var(--color-ink);
+}
+
+.pill-primary:hover:not(:disabled) {
+  background: #000;
+  border-color: #000;
+}
+
+.pill-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--color-ink-soft);
+}
+
+.pill-ghost:hover:not(:disabled) {
+  background: var(--color-line-soft);
+  color: var(--color-ink);
+  border-color: transparent;
+}
+
+/* dark variant of pills, used on reflection editor */
+.card-dark .pill {
+  background: rgba(241, 237, 228, 0.08);
+  color: var(--color-night-ink);
+  border-color: var(--color-night-line);
+}
+
+.card-dark .pill:hover:not(:disabled) {
+  background: var(--color-night-ink);
+  color: var(--color-night);
+  border-color: var(--color-night-ink);
+}
+
+.card-dark .pill-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--color-night-ink-soft);
+}
+
+.card-dark .pill-ghost:hover:not(:disabled) {
+  background: rgba(241, 237, 228, 0.08);
+  color: var(--color-night-ink);
+}
+
+/* ---------- chrome-less compose form ---------- */
+
+.compose {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 18px 14px;
+  background: var(--color-paper);
+  border-radius: var(--radius-mini);
+  animation: card-enter 220ms ease-out both;
+}
+
+.compose-textarea,
+.compose-input {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  outline: none;
+  padding: 0;
+  font-size: 15px;
+  line-height: 1.55;
+  caret-color: var(--color-ink);
+  color: var(--color-ink);
+}
+
+.compose-textarea::placeholder,
+.compose-input::placeholder {
+  color: var(--color-ink-mute);
+}
+
+.compose-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.compose-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.compose-spacer {
+  flex: 1;
+}
+
+.compose-error {
+  font-size: 12.5px;
+  color: #b04545;
+}
+
+/* file input as a small ghost pill */
+.file-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: transparent;
+  border: 1px dashed var(--color-line);
+  color: var(--color-ink-soft);
+  cursor: pointer;
+  transition: border-color 140ms ease, color 140ms ease,
+    transform 220ms cubic-bezier(0.34, 1.45, 0.55, 1);
+  transform-origin: 50% 50%;
+}
+
+.file-pill:hover {
+  border-color: var(--color-ink-soft);
+  color: var(--color-ink);
+  transform: rotate(-1.5deg) scale(1.03);
+  /* milder than .pill-bouncy on purpose */
+}
+
+.file-pill:active {
+  transform: rotate(-1.5deg) scale(0.96);
+  transition-duration: 90ms;
+  transition-timing-function: ease-out;
+}
+
+.file-pill input[type="file"] {
+  display: none;
+}
+
+.file-pill .file-name {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-ink);
+}
+
+/* ---------- reflection compose: dark variant ---------- */
+
+.compose-dark {
+  background: var(--color-night);
+  color: var(--color-night-ink);
+}
+
+.compose-dark .compose-textarea,
+.compose-dark .compose-input {
+  color: var(--color-night-ink);
+  caret-color: var(--color-night-ink);
+}
+
+.compose-dark .compose-textarea::placeholder,
+.compose-dark .compose-input::placeholder {
+  color: rgba(241, 237, 228, 0.32);
+}
+
+.compose-dark .reflection-label {
+  color: var(--color-night-ink-soft);
+}
+
+.compose-dark .compose-row + .compose-row {
+  border-top: 1px solid var(--color-night-line);
+  padding-top: 10px;
+}
+
+/* ---------- hairline edit-in-place (mini-card edit) ---------- */
+
+.edit-inline {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.edit-inline-textarea,
+.edit-inline-input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--color-line);
+  background: rgba(255, 255, 255, 0.4);
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--color-ink);
+  outline: none;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.edit-inline-textarea:focus,
+.edit-inline-input:focus {
+  border-color: var(--color-ink-soft);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.card-dark .edit-inline-textarea,
+.card-dark .edit-inline-input {
+  border-color: var(--color-night-line);
+  background: rgba(241, 237, 228, 0.04);
+  color: var(--color-night-ink);
+}
+
+.card-dark .edit-inline-textarea:focus,
+.card-dark .edit-inline-input:focus {
+  border-color: rgba(241, 237, 228, 0.32);
+  background: rgba(241, 237, 228, 0.08);
+}
+
+/* ---------- edit menu (collapses when not hovered) ---------- */
+
+.edit-slot {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 220ms ease, margin-bottom 220ms ease;
+}
+
+.edit-slot > .edit-buttons {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 14px;
+  transition: padding 220ms ease, opacity 160ms ease;
+  opacity: 0;
+}
+
+/* Non-inset cards (note, reflection) have card-shell padding 16px 18px.
+   Horizontal negative margins extend buttons to the card edges. The bottom
+   margin only kicks in when the slot is open — at rest we keep the card's
+   16px padding-bottom so the last line of text isn't flush with the edge. */
+.edit-slot:not(.edit-slot-inset) {
+  margin: 0 -18px 0;
+}
+
+.card-shell:hover .edit-slot,
+.card-shell:focus-within .edit-slot,
+.edit-slot[data-open] {
+  max-height: 64px;
+}
+
+.card-shell:hover .edit-slot:not(.edit-slot-inset),
+.card-shell:focus-within .edit-slot:not(.edit-slot-inset),
+.edit-slot:not(.edit-slot-inset)[data-open] {
+  margin-bottom: -16px;
+}
+
+.card-shell:hover .edit-slot > .edit-buttons,
+.card-shell:focus-within .edit-slot > .edit-buttons,
+.edit-slot[data-open] > .edit-buttons {
+  padding: 14px;
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .edit-slot {
+    max-height: 64px;
+  }
+  .edit-slot:not(.edit-slot-inset) {
+    margin-bottom: -16px;
+  }
+  .edit-slot > .edit-buttons {
+    padding: 14px;
+    opacity: 1;
+  }
+  .card-image:has(.edit-slot) .image-note {
+    padding-bottom: 0;
+  }
+}
+
+.edit-buttons .pill {
+  font-size: 11px;
+  padding: 3px 10px;
+}
+
+/* Ghost pills in the edit menu get a faint always-visible border
+   so the pill shape reads at rest — without it, transparent bg/border
+   make the cluster feel disconnected. */
+.edit-buttons .pill-ghost {
+  border-color: var(--color-line);
+}
+
+.card-dark .edit-buttons .pill-ghost {
+  border-color: var(--color-night-line);
+}
+
+/* ---------- sortable + drag overlay ---------- */
+
+.sortable-wrap {
+  position: relative;
+}
+
+/* Source ghost while the card is being dragged: hide the slot so
+   neighbors can flow into the gap. The DragOverlay carries the visible
+   card. The slot still occupies layout space (no display:none) so the
+   sortable transforms remain stable. */
+.sortable-wrap[data-dragging] {
+  opacity: 0;
+}
+
+.sortable-wrap[data-dragging] .drag-handle {
+  opacity: 0;
+}
+
+/* Hide the drag handle while the card is in edit mode — the editor
+   owns the top-right area and dragging would conflict with input.
+   Selectors include :hover and :focus-within so they out-specify the
+   hover-reveal rule (the textarea autofocuses on edit, which would
+   otherwise re-show the handle via :focus-within). */
+.sortable-wrap:has(.edit-inline) .drag-handle,
+.sortable-wrap:has(.edit-inline):hover .drag-handle,
+.sortable-wrap:has(.edit-inline):focus-within .drag-handle {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* The lifted card rendered in the DragOverlay portal. */
+.drag-overlay {
+  cursor: grabbing;
+  transform: rotate(1.4deg) scale(1.02);
+  transform-origin: 50% 50%;
+  filter: drop-shadow(0 14px 28px rgba(27, 26, 24, 0.18))
+    drop-shadow(0 4px 8px rgba(27, 26, 24, 0.08));
+}
+
+/* Suppress the card-enter animation when the same card mounts inside
+   the overlay portal — it would re-fire on every drag start. */
+.drag-overlay .card-shell {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drag-overlay {
+    transform: none;
+    filter: drop-shadow(0 8px 16px rgba(27, 26, 24, 0.16));
+  }
+}
+
+.drag-handle {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-ink-mute);
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  cursor: grab;
+  touch-action: none;
+  opacity: 0;
+  transition: opacity 140ms ease, color 140ms ease, background 140ms ease;
+}
+
+.sortable-wrap:hover .drag-handle,
+.sortable-wrap:focus-within .drag-handle {
+  opacity: 1;
+}
+
+.drag-handle:hover {
+  color: var(--color-ink);
+  background: var(--color-line-soft);
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+@media (hover: none) {
+  .drag-handle {
+    opacity: 0.55;
+  }
+}
+
+.card-dark .drag-handle {
+  color: rgba(241, 237, 228, 0.45);
+}
+
+.card-dark .drag-handle:hover {
+  color: var(--color-night-ink);
+  background: rgba(241, 237, 228, 0.08);
+}
+
+.drag-dots {
+  display: grid;
+  grid-template-columns: 2px 2px;
+  gap: 2px;
+  width: 8px;
+  height: 12px;
+}
+
+.drag-dots span {
+  width: 2px;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+/* ---------- dropzone overlay ---------- */
+
+.dropzone-wrap {
+  position: relative;
+  outline: none;
+}
+
+.dropzone-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 30;
+}
+
+.dropzone-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 16px;
+  border: 2px dashed rgba(27, 26, 24, 0.28);
+  border-radius: 24px;
+  background: rgba(239, 236, 230, 0.55);
+  backdrop-filter: blur(2px);
+}
+
+.dropzone-overlay-text {
+  position: relative;
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-ink);
+  background: var(--color-paper);
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--color-line);
+}
+
+.dropzone-status {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: var(--color-paper);
+  border: 1px solid var(--color-line);
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--color-ink-soft);
+  z-index: 20;
+  animation: card-enter 180ms ease-out both;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Sweeping shimmer overlay while an image is being processed/uploaded.
+   Driven by data-progress so it does not fire on the error variant. */
+.dropzone-status[data-progress]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(27, 26, 24, 0.06) 50%,
+    transparent 100%
+  );
+  animation: dropzone-shimmer 1.4s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes dropzone-shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.dropzone-error {
+  color: #b04545;
+}
+
+/* ---------- empty states ---------- */
+
+.empty-quiet {
+  font-size: 13px;
+  color: var(--color-ink-mute);
+  letter-spacing: 0.04em;
+  padding: 6px 4px;
+}
+
+/* The right half before the partner has joined: shown in place of a
+   <Half/> so it inherits the same column geometry, but it's a quiet
+   invite-to-share placeholder rather than a scrollable card stack. */
+.waiting-half {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.waiting-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 24px;
+  text-align: center;
+  max-width: 320px;
+}
+
+.waiting-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+  margin: 0;
+}
+
+.waiting-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-ink);
+  margin: 0 0 4px;
+}
+
+.empty-centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+  color: var(--color-ink-mute);
+  font-size: 14px;
+}
+
+/* ---------- setup + picker ---------- */
+
+.setup-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.setup-card {
+  width: min(440px, 100%);
+  background: var(--color-day);
+  border-radius: var(--radius-day);
+  padding: 28px;
+}
+
+.setup-card h1 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+
+.setup-card p {
+  margin: 0 0 18px;
+  color: var(--color-ink-soft);
+  font-size: 14px;
+}
+
+.setup-field {
+  margin-bottom: 12px;
+}
+
+.setup-field label {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+  margin-bottom: 6px;
+}
+
+.setup-field input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--color-line);
+  background: var(--color-paper);
+  font-size: 15px;
+  outline: none;
+  transition: border-color 120ms ease;
+}
+
+.setup-field input:focus {
+  border-color: var(--color-ink-soft);
+}
+
+/* ---------- animations ---------- */
+
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Distinct settle motion for *just-created* cards — overrides the
+   plain card-enter so a freshly-posted card lands more deliberately
+   than one that simply rendered in via refetch or page load. The
+   `data-fresh` attribute is set by the card components when the
+   createdAt timestamp is within the last few seconds. */
+.card-shell[data-fresh] {
+  animation: card-settle 520ms cubic-bezier(0.34, 1.45, 0.55, 1) both;
+}
+
+@keyframes card-settle {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.94);
+    filter: blur(2px);
+  }
+  55% {
+    opacity: 1;
+    transform: translateY(2px) scale(1.025);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* Soft cross-fade when a MiniCard toggles between view and edit.
+   Each child of card-shell fades in on mount; React re-mounts the
+   markdown / form when `editing` flips, so the animation re-fires
+   on each toggle without restarting the card-shell wrapper. */
+.card-shell > .markdown,
+.card-shell > .edit-inline,
+.card-shell > .reflection-section,
+.card-shell > .caption {
+  animation: content-fade 200ms ease both;
+}
+
+@keyframes content-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Save confirmation: when a form sets data-saved on its submit pill
+   the label morphs to a check and the pill briefly pops. */
+.pill[data-saved] {
+  animation: pill-saved-pop 360ms cubic-bezier(0.34, 1.55, 0.55, 1) both;
+}
+
+@keyframes pill-saved-pop {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.18);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Mobile tab horizontal slide: both halves render inside a track
+   that translates -50% when the second tab is active. */
+.canvas-mobile {
+  overflow: hidden;
+  position: relative;
+}
+
+.canvas-mobile-track {
+  display: flex;
+  width: 200%;
+  height: 100%;
+  transition: transform 320ms cubic-bezier(0.32, 0.72, 0.32, 1);
+}
+
+.canvas-mobile-track > * {
+  width: 50%;
+  flex-shrink: 0;
+  height: 100%;
+  min-width: 0;
+}
+
+.canvas-mobile-track[data-tab="name1"] {
+  transform: translateX(0);
+}
+
+.canvas-mobile-track[data-tab="name2"] {
+  transform: translateX(-50%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .day-card,
+  .card-shell,
+  .card-shell > .markdown,
+  .card-shell > .edit-inline,
+  .card-shell > .reflection-section,
+  .card-shell > .caption,
+  .compose,
+  .composer-pills,
+  .composer-pills > *,
+  .pill,
+  .pill[data-saved],
+  .drag-handle,
+  .edit-menu,
+  .dropzone-status,
+  .dropzone-status[data-progress]::before,
+  .today-pill,
+  .mobile-tab,
+  .canvas-mobile-track,
+  .sortable-wrap {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ---------- theme toggle ---------- */
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  color: var(--color-ink-soft);
+  background: transparent;
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.theme-toggle:hover {
+  background: var(--color-line-soft);
+  color: var(--color-ink);
+}
+
+.theme-toggle .theme-toggle-sun {
+  display: none;
+}
+.theme-toggle .theme-toggle-moon {
+  display: block;
+}
+
+:root[data-theme="dark"] .theme-toggle .theme-toggle-sun {
+  display: block;
+}
+:root[data-theme="dark"] .theme-toggle .theme-toggle-moon {
+  display: none;
+}
+
+/* ---------- dark mode ---------- */
+
+:root[data-theme="dark"] {
+  --color-canvas: #1b1a18;
+  --color-day: #232120;
+  --color-paper: #2a2825;
+  --color-paper-soft: rgba(42, 40, 37, 0.55);
+  --color-ink: #f1ede4;
+  --color-ink-soft: rgba(241, 237, 228, 0.62);
+  --color-ink-mute: rgba(241, 237, 228, 0.38);
+  --color-line: rgba(241, 237, 228, 0.12);
+  --color-line-soft: rgba(241, 237, 228, 0.06);
+
+  /* Reflection cards stay distinct against the dark canvas by sitting
+     a little lighter than the surrounding surfaces. */
+  --color-night: #383532;
+  --color-night-soft: #423f3b;
+}
+
+:root[data-theme="dark"] ::selection {
+  background: rgba(241, 237, 228, 0.18);
+}
+
+:root[data-theme="dark"] .half-header::after {
+  background: linear-gradient(
+    to bottom,
+    var(--color-canvas) 0%,
+    rgba(27, 26, 24, 0.7) 35%,
+    rgba(27, 26, 24, 0.3) 70%,
+    rgba(27, 26, 24, 0) 100%
+  );
+}
+
+:root[data-theme="dark"] .markdown code {
+  background: rgba(241, 237, 228, 0.08);
+}
+
+:root[data-theme="dark"] .edit-inline-textarea,
+:root[data-theme="dark"] .edit-inline-input {
+  background: rgba(241, 237, 228, 0.04);
+}
+
+:root[data-theme="dark"] .edit-inline-textarea:focus,
+:root[data-theme="dark"] .edit-inline-input:focus {
+  background: rgba(241, 237, 228, 0.08);
+}
+
+:root[data-theme="dark"] .pill-primary:hover:not(:disabled) {
+  background: #fff;
+  border-color: #fff;
+}
+
+:root[data-theme="dark"] .dropzone-overlay::before {
+  background: rgba(27, 26, 24, 0.55);
+  border-color: rgba(241, 237, 228, 0.28);
 }
