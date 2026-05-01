@@ -61,11 +61,8 @@ export const cards = sqliteTable(
   ],
 );
 
-// Anonymous guest reactions attached to a card. Two kinds:
-//   - "emoji" → content is the emoji char (e.g. "😀"); width/height unused.
-//   - "gif"   → content is a GIPHY embed URL; width/height set for sizing.
-// No identity — anyone visiting the public canvas can react; only authors
-// can remove. Cascade-deleted when the parent card is removed.
+// Anonymous guest reactions. content is the emoji char or a GIPHY embed
+// URL; width/height are only set for gif. Cascades on parent card delete.
 export const reactions = sqliteTable(
   "reactions",
   {

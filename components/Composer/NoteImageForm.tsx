@@ -12,6 +12,7 @@ import { uploadImageAction } from "@/app/actions/upload";
 import { processImage, UnsupportedImageTypeError } from "@/lib/image";
 import { AutoGrowTextarea } from "@/components/AutoGrowTextarea";
 import { useSubmitMorph } from "@/lib/hooks/useSubmitMorph";
+import type { PickerSelection } from "@/lib/giphy-types";
 
 import { GiphyPicker } from "./GiphyPicker";
 
@@ -45,15 +46,13 @@ export function NoteImageForm({
       let url: string;
       if (giphyUrl) {
         url = giphyUrl;
-      } else if (file) {
+      } else {
         setStatus("processing");
-        const processed = await processImage(file);
+        const processed = await processImage(file!);
         setStatus("uploading");
         const uploadFd = new FormData();
         uploadFd.set("file", processed);
         url = await uploadImageAction(uploadFd);
-      } else {
-        return;
       }
 
       const createFd = new FormData();
@@ -100,9 +99,7 @@ export function NoteImageForm({
     if (next) setGiphyUrl(null);
   }
 
-  function pickFromGiphy(picked:
-    | { kind: "gif"; embedUrl: string }
-    | { kind: "emoji" }) {
+  function pickFromGiphy(picked: PickerSelection) {
     if (picked.kind !== "gif") return;
     setError(null);
     setGiphyUrl(picked.embedUrl);

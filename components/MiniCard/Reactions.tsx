@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useWebHaptics } from "web-haptics/react";
 
@@ -9,10 +10,9 @@ import {
   removeReactionAction,
   type AddReactionInput,
 } from "@/app/actions/reactions";
-import {
-  GiphyPicker,
-  type PickerSelection,
-} from "@/components/Composer/GiphyPicker";
+import type { CanvasData } from "@/app/actions/data";
+import { GiphyPicker } from "@/components/Composer/GiphyPicker";
+import type { PickerSelection } from "@/lib/giphy-types";
 import type { Reaction } from "@/lib/db/schema";
 
 const LONG_PRESS_MS = 380;
@@ -27,10 +27,7 @@ export function Reactions({
 }: {
   cardId: string;
   reactions: Reaction[];
-  /** False for cards the viewer authored AND can still edit — they shouldn't
-   *  react to their own in-progress posts. Guests and old self-cards: true. */
   canAdd: boolean;
-  /** True for the journal authors — they can prune. Guests cannot. */
   canRemove: boolean;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -46,10 +43,9 @@ export function Reactions({
   const visibleReactions =
     expanded || overflow <= 0 ? reactions : reactions.slice(0, VISIBLE_LIMIT);
 
-  // Long-press on the parent card reveals the "+" button on touch devices,
-  // matching the desktop hover behaviour without making the button always
-  // visible. Pointerdown outside the card hides it again. Skip wiring it
-  // up when there is no "+" button to reveal.
+  // Long-press on the parent card reveals the "+" on touch devices —
+  // matches the desktop hover behaviour without making the button always
+  // visible. CSS :hover sticks after a tap, so we drive this with state.
   useEffect(() => {
     if (!canAdd) return;
     const root = rootRef.current;
@@ -100,7 +96,6 @@ export function Reactions({
     };
   }, [canAdd]);
 
-  // Dismiss the long-press reveal when the user taps elsewhere.
   useEffect(() => {
     if (!revealed) return;
     function onPointerDown(event: PointerEvent) {
@@ -116,6 +111,30 @@ export function Reactions({
     setPickerOpen(false);
     setRevealed(false);
     setError(null);
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const optimistic: Reaction =
+      picked.kind === "emoji"
+        ? {
+            id: tempId,
+            cardId,
+            kind: "emoji",
+            content: picked.emoji,
+            width: null,
+            height: null,
+            createdAt: new Date(),
+          }
+        : {
+            id: tempId,
+            cardId,
+            kind: "gif",
+            content: picked.embedUrl,
+            width: picked.width,
+            height: picked.height,
+            createdAt: new Date(),
+          };
+    spliceReaction(qc, optimistic);
+    haptic.trigger("light");
+
     const input: AddReactionInput =
       picked.kind === "emoji"
         ? { kind: "emoji", cardId, emoji: picked.emoji }
@@ -128,10 +147,10 @@ export function Reactions({
           };
     startTransition(async () => {
       try {
-        await addReactionAction(input);
-        qc.invalidateQueries({ queryKey: ["canvas"] });
-        haptic.trigger("light");
+        const real = await addReactionAction(input);
+        replaceReaction(qc, tempId, real);
       } catch (err) {
+        removeReactionFromCache(qc, tempId);
         haptic.trigger("error");
         setError(err instanceof Error ? err.message : "Couldn't react.");
       }
@@ -140,11 +159,13 @@ export function Reactions({
 
   function remove(id: string) {
     setError(null);
+    const previous = reactions.find((r) => r.id === id);
+    removeReactionFromCache(qc, id);
     startTransition(async () => {
       try {
         await removeReactionAction(id);
-        qc.invalidateQueries({ queryKey: ["canvas"] });
       } catch (err) {
+        if (previous) spliceReaction(qc, previous);
         setError(err instanceof Error ? err.message : "Couldn't remove.");
       }
     });
@@ -160,56 +181,15 @@ export function Reactions({
       data-reveal={revealed || undefined}
       onClick={(e) => e.stopPropagation()}
     >
-      {visibleReactions.map((r) =>
-        r.kind === "emoji" ? (
-          <span
-            key={r.id}
-            className="reaction-chip reaction-chip-emoji"
-          >
-            <span className="reaction-emoji" aria-hidden="true">
-              {r.content}
-            </span>
-            {canRemove && (
-              <button
-                type="button"
-                className="reaction-remove"
-                onClick={() => remove(r.id)}
-                disabled={pending}
-                aria-label="remove reaction"
-                title="remove reaction"
-              >
-                ×
-              </button>
-            )}
-          </span>
-        ) : (
-          <span
-            key={r.id}
-            className="reaction-chip reaction-chip-gif"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={r.content}
-              alt=""
-              loading="lazy"
-              width={r.width ?? undefined}
-              height={r.height ?? undefined}
-            />
-            {canRemove && (
-              <button
-                type="button"
-                className="reaction-remove"
-                onClick={() => remove(r.id)}
-                disabled={pending}
-                aria-label="remove reaction"
-                title="remove reaction"
-              >
-                ×
-              </button>
-            )}
-          </span>
-        ),
-      )}
+      {visibleReactions.map((r) => (
+        <ReactionChip
+          key={r.id}
+          reaction={r}
+          canRemove={canRemove}
+          pending={pending}
+          onRemove={remove}
+        />
+      ))}
       {!expanded && overflow > 0 && (
         <button
           type="button"
@@ -228,13 +208,11 @@ export function Reactions({
           onClick={(event) => {
             setPickerOpen(true);
             setRevealed(false);
-            // For mouse clicks (event.detail > 0), drop focus so the
-            // card's :focus-within doesn't keep the icon visible after
-            // the picker closes. Keyboard activations (detail === 0)
-            // keep focus so it can return here after Escape.
+            // Mouse clicks: drop focus so :focus-within doesn't keep the
+            // icon visible after the picker closes. Keyboard activations
+            // (detail === 0) keep focus so it can return after Escape.
             if (event.detail > 0) event.currentTarget.blur();
           }}
-          disabled={pending}
           aria-label="add a reaction"
           title="add a reaction"
         >
@@ -254,6 +232,159 @@ export function Reactions({
         />
       )}
     </div>
+  );
+}
+
+function ReactionChip({
+  reaction: r,
+  canRemove,
+  pending,
+  onRemove,
+}: {
+  reaction: Reaction;
+  canRemove: boolean;
+  pending: boolean;
+  onRemove: (id: string) => void;
+}) {
+  const isOptimistic = r.id.startsWith("temp-");
+  const [enlarged, setEnlarged] = useState(false);
+
+  function open() {
+    if (isOptimistic) return;
+    setEnlarged(true);
+  }
+
+  return (
+    <>
+      <span
+        className={`reaction-chip reaction-chip-${r.kind}`}
+        data-pending={isOptimistic || undefined}
+        role="button"
+        tabIndex={isOptimistic ? -1 : 0}
+        aria-label={
+          r.kind === "emoji" ? `enlarge ${r.content}` : "enlarge reaction"
+        }
+        onClick={open}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            open();
+          }
+        }}
+      >
+        {r.kind === "emoji" ? (
+          <span className="reaction-emoji" aria-hidden="true">
+            {r.content}
+          </span>
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={r.content}
+            alt=""
+            loading="lazy"
+            width={r.width ?? undefined}
+            height={r.height ?? undefined}
+          />
+        )}
+        {canRemove && !isOptimistic && (
+          <button
+            type="button"
+            className="reaction-remove"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove(r.id);
+            }}
+            disabled={pending}
+            aria-label="remove reaction"
+            title="remove reaction"
+          >
+            ×
+          </button>
+        )}
+      </span>
+      {enlarged && (
+        <ReactionPreview
+          reaction={r}
+          onClose={() => setEnlarged(false)}
+        />
+      )}
+    </>
+  );
+}
+
+function ReactionPreview({
+  reaction: r,
+  onClose,
+}: {
+  reaction: Reaction;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.stopPropagation();
+        onClose();
+      }
+    }
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [onClose]);
+
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
+    <div
+      className="reaction-preview-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-label="enlarged reaction"
+      onClick={onClose}
+    >
+      {r.kind === "emoji" ? (
+        <span className="reaction-preview-emoji" aria-hidden="true">
+          {r.content}
+        </span>
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          className="reaction-preview-img"
+          src={r.content}
+          alt=""
+          width={r.width ?? undefined}
+          height={r.height ?? undefined}
+        />
+      )}
+    </div>,
+    document.body,
+  );
+}
+
+type QC = ReturnType<typeof useQueryClient>;
+
+function spliceReaction(qc: QC, next: Reaction) {
+  qc.setQueryData<CanvasData>(["canvas"], (prev) =>
+    prev ? { ...prev, reactions: [...prev.reactions, next] } : prev,
+  );
+}
+
+function replaceReaction(qc: QC, tempId: string, real: Reaction) {
+  // Race-safe: a background refetch could land between optimistic insert
+  // and server response. Drop both ids before appending so we end up with
+  // exactly one row regardless of who got there first.
+  qc.setQueryData<CanvasData>(["canvas"], (prev) => {
+    if (!prev) return prev;
+    const others = prev.reactions.filter(
+      (r) => r.id !== tempId && r.id !== real.id,
+    );
+    return { ...prev, reactions: [...others, real] };
+  });
+}
+
+function removeReactionFromCache(qc: QC, id: string) {
+  qc.setQueryData<CanvasData>(["canvas"], (prev) =>
+    prev
+      ? { ...prev, reactions: prev.reactions.filter((r) => r.id !== id) }
+      : prev,
   );
 }
 

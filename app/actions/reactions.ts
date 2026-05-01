@@ -1,6 +1,6 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 import { db } from "@/lib/db/client";
@@ -33,32 +33,31 @@ export async function addReactionAction(
   const card = await getCardById(cardId);
   if (!card) throw new Error("Card not found.");
 
-  // Soft cap to prevent runaway spam. We don't authenticate guests, so
-  // this is the only ceiling on a single card's reaction list.
-  const existing = await db
-    .select({ id: reactions.id })
+  // Soft cap to prevent runaway spam from unauthenticated guests.
+  const [{ count }] = await db
+    .select({ count: sql<number>`count(*)` })
     .from(reactions)
-    .where(eq(reactions.cardId, cardId))
-    .limit(MAX_REACTIONS_PER_CARD + 1);
-  if (existing.length >= MAX_REACTIONS_PER_CARD) {
+    .where(eq(reactions.cardId, cardId));
+  if (count >= MAX_REACTIONS_PER_CARD) {
     throw new Error("This card has reached the reaction limit.");
   }
 
   const id = newId();
+  const createdAt = new Date();
 
+  let row: Reaction;
   if (input.kind === "emoji") {
     const emoji = String(input.emoji ?? "").trim();
-    // Strip ZWJ trailing nonsense; keep small. We don't need to police the
-    // whole Unicode emoji set — just keep payloads tiny.
-    if (!emoji || emoji.length > EMOJI_MAX_LEN) {
-      throw new Error("Invalid emoji.");
-    }
-    await db.insert(reactions).values({
+    if (!emoji || emoji.length > EMOJI_MAX_LEN) throw new Error("Invalid emoji.");
+    row = {
       id,
       cardId,
       kind: "emoji",
       content: emoji,
-    });
+      width: null,
+      height: null,
+      createdAt,
+    };
   } else {
     const embedUrl = String(input.embedUrl ?? "").trim();
     if (!embedUrl || embedUrl.length > URL_MAX) {
@@ -75,26 +74,23 @@ export async function addReactionAction(
       1,
       Math.min(2000, Math.floor(Number(input.height) || 200)),
     );
-    await db.insert(reactions).values({
+    row = {
       id,
       cardId,
       kind: "gif",
       content: embedUrl,
       width,
       height,
-    });
+      createdAt,
+    };
   }
 
+  await db.insert(reactions).values(row);
   revalidatePath("/");
-  const row = (
-    await db.select().from(reactions).where(eq(reactions.id, id)).limit(1)
-  )[0];
-  if (!row) throw new Error("Failed to read reaction back.");
   return row;
 }
 
 export async function removeReactionAction(reactionId: string): Promise<void> {
-  // Authors only — guests can add but not curate.
   const user = await getCurrentUser();
   if (!user) throw new Error("Only the journal owners can remove reactions.");
   const id = String(reactionId ?? "").trim();

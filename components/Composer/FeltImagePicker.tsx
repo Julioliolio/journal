@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 
 import { useImageUpload } from "@/lib/hooks/useImageUpload";
 import { isVideoUrl, MEDIA_ACCEPT_ATTR } from "@/lib/image";
+import type { PickerSelection } from "@/lib/giphy-types";
 
 import { GiphyPicker } from "./GiphyPicker";
 
@@ -31,9 +32,7 @@ export function FeltImagePicker({
     if (inputRef.current) inputRef.current.value = "";
   }
 
-  function pickFromGiphy(picked:
-    | { kind: "gif"; embedUrl: string }
-    | { kind: "emoji" }) {
+  function pickFromGiphy(picked: PickerSelection) {
     if (picked.kind !== "gif") return;
     onChange(picked.embedUrl);
     setPickerOpen(false);

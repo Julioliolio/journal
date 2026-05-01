@@ -1,17 +1,8 @@
 import "server-only";
 
-export type GiphyMediaType = "gifs" | "stickers";
+import type { GiphyItem, GiphyMediaType } from "./giphy-types";
 
-export type GiphyItem = {
-  id: string;
-  title: string;
-  /** Small animated GIF used in the picker grid (low-bandwidth). */
-  previewUrl: string;
-  /** Hotlinked rendition we store on the card. */
-  embedUrl: string;
-  width: number;
-  height: number;
-};
+export type { GiphyItem, GiphyMediaType };
 
 const GIPHY_BASE = "https://api.giphy.com/v1";
 const SEARCH_LIMIT = 24;
@@ -81,24 +72,32 @@ export async function searchGiphy(
     ? `${root}/search?${params.toString()}&q=${encodeURIComponent(trimmed)}`
     : `${root}/trending?${params.toString()}`;
 
-  const response = await fetch(endpoint, { cache: "no-store" });
+  // GIPHY trending and search results barely change minute-to-minute; a
+  // short Next data-cache TTL turns repeat queries (same picker reopened,
+  // same partner viewing the canvas) into free hits.
+  const response = await fetch(endpoint, { next: { revalidate: 60 } });
   if (!response.ok) throw translateError(response.status);
   const json = (await response.json()) as RawGiphyResponse;
 
-  return json.data.map((item) => {
-    const fw = item.images.fixed_width;
-    const preview = item.images.fixed_width_downsampled ?? fw;
-    // Prefer the downsized rendition (≤2MB) for the embedded card; it
-    // looks great at card size while staying friendly on mobile data.
-    const embed = item.images.downsized ?? item.images.original ?? fw;
-    return {
-      id: item.id,
-      title: item.title || (mediaType === "stickers" ? "Sticker" : "GIF"),
-      previewUrl: preview.url,
-      embedUrl: embed.url,
-      width: Number(embed.width) || 200,
-      height: Number(embed.height) || 200,
-    };
+  return json.data.flatMap((item) => {
+    // Stickers and gifs share the same envelope, but individual entries
+    // occasionally come back missing one rendition or another. Skip those
+    // rather than throw — one bad row shouldn't blank the whole grid.
+    const images = item.images ?? ({} as RawGiphyEntry["images"]);
+    const fw = images.fixed_width;
+    const preview = images.fixed_width_downsampled ?? fw;
+    const embed = images.downsized ?? images.original ?? fw;
+    if (!preview?.url || !embed?.url) return [];
+    return [
+      {
+        id: item.id,
+        title: item.title || (mediaType === "stickers" ? "Sticker" : "GIF"),
+        previewUrl: preview.url,
+        embedUrl: embed.url,
+        width: Number(embed.width) || 200,
+        height: Number(embed.height) || 200,
+      },
+    ];
   });
 }
 

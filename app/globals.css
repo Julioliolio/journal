@@ -1621,13 +1621,15 @@ textarea {
 .giphy-header {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   padding: 12px 14px;
   border-bottom: 1px solid var(--color-line);
 }
 
 .giphy-search {
-  flex: 1;
+  flex: 1 1 200px;
+  min-width: 0;
   padding: 8px 14px;
   border-radius: 999px;
   background: var(--color-day);
@@ -1721,6 +1723,11 @@ textarea {
   }
   .giphy-grid {
     column-count: 2;
+  }
+  /* Drop the search onto its own row so the tabs + close stay tappable. */
+  .giphy-search {
+    order: 3;
+    flex-basis: 100%;
   }
 }
 
@@ -1818,8 +1825,27 @@ textarea {
   border: 1px solid var(--color-line);
   border-radius: 8px;
   line-height: 1;
-  cursor: default;
+  cursor: zoom-in;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 120ms ease;
   animation: card-enter 220ms ease-out both;
+}
+
+.reaction-chip:hover {
+  transform: scale(1.06);
+}
+
+.reaction-chip:active {
+  transform: scale(0.96);
+}
+
+.reaction-chip[data-pending] {
+  cursor: progress;
+}
+
+.reaction-chip[data-pending]:hover {
+  transform: none;
 }
 
 .reaction-chip-emoji {
@@ -1835,16 +1861,16 @@ textarea {
 
 .reaction-chip-gif {
   padding: 2px;
-  height: 30px;
+  height: 24px;
 }
 
 .reaction-chip-gif img {
   display: block;
-  height: 24px;
+  height: 18px;
   width: auto;
-  max-width: 64px;
+  max-width: 48px;
   object-fit: contain;
-  border-radius: 5px;
+  border-radius: 4px;
 }
 
 .reaction-remove {
@@ -1973,6 +1999,52 @@ textarea {
   text-align: right;
   font-size: 12px;
   color: var(--color-ink-soft);
+}
+
+/* Click-to-enlarge preview: full-screen lightbox so guests can actually
+   see what a tiny gif/sticker chip is. Click anywhere or press Escape
+   to dismiss. */
+.reaction-preview-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(27, 26, 24, 0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  cursor: zoom-out;
+  animation: reaction-preview-fade 160ms ease-out;
+}
+
+.reaction-preview-emoji {
+  font-size: clamp(120px, 28vw, 280px);
+  line-height: 1;
+  filter: drop-shadow(0 12px 32px rgba(0, 0, 0, 0.35));
+  animation: reaction-preview-pop 260ms cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+.reaction-preview-img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: min(480px, 92vw);
+  max-height: 80vh;
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  animation: reaction-preview-pop 260ms cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+@keyframes reaction-preview-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes reaction-preview-pop {
+  from { transform: scale(0.5); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 
 /* Image card: overlay reactions in the bottom-right corner over the photo

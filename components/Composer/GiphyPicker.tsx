@@ -4,21 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { searchGiphyAction } from "@/app/actions/giphy";
+import type { GiphyItem, PickerSelection } from "@/lib/giphy-types";
 
-type GiphyItem = {
-  id: string;
-  title: string;
-  previewUrl: string;
-  embedUrl: string;
-  width: number;
-  height: number;
-};
+export type { PickerSelection };
 
 type PickerTab = "emoji" | "stickers" | "gifs";
-
-export type PickerSelection =
-  | { kind: "emoji"; emoji: string }
-  | { kind: "gif"; embedUrl: string; width: number; height: number };
 
 const EMOJI_PALETTE = [
   "❤️", "🧡", "💛", "💚", "💙", "💜", "🤍", "🖤",
@@ -30,7 +20,7 @@ const EMOJI_PALETTE = [
   "🍕", "🍔", "🍰", "🍪", "🍫", "☕", "🍵", "🍷",
   "🐶", "🐱", "🦊", "🐻", "🐼", "🦄", "🐝", "🐢",
   "🚀", "💌", "🎁", "📚", "🎵", "🎨", "🏔️", "🌊",
-  "👀", "💀", "🤔", "😅", "😬", "😮", "🤯", "😱",
+  "👀", "💀", "🤔", "😳", "😬", "😮", "🤯", "😱",
   "👻", "👋", "🫡", "🫠", "🫥", "🤌", "🤞", "✌️",
   "💔", "❣️", "💕", "💞", "💖", "💘", "💝", "💟",
 ];
@@ -74,7 +64,15 @@ export function GiphyPicker({
         setLoading(false);
       } catch (err) {
         if (cancelled || requestRef.current !== id) return;
-        setError(err instanceof Error ? err.message : "Search failed.");
+        // Server-action errors are masked in production with a long
+        // "omitted in production builds" boilerplate. Replace it with
+        // something a guest can actually act on.
+        const raw = err instanceof Error ? err.message : "";
+        const friendly =
+          !raw || raw.includes("omitted in production builds")
+            ? `Couldn't load ${tab} from GIPHY. Try again in a moment.`
+            : raw;
+        setError(friendly);
         setLoading(false);
       }
     }, query.trim() ? 280 : 0);
