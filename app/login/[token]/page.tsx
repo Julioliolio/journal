@@ -78,10 +78,7 @@ export default async function LoginPage({
                 autoComplete="off"
               />
             </div>
-            <div
-              className="compose-footer"
-              style={{ marginTop: 16, justifyContent: "flex-end" }}
-            >
+            <div className="setup-actions">
               <button type="submit" className="pill pill-primary">
                 start
               </button>

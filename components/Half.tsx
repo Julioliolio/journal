@@ -202,7 +202,7 @@ export function Half({
                 cards={dayCards}
                 reactionsByCardId={reactionsByCardId}
                 isOwn={isOwn}
-                isToday={date === today}
+                today={today}
               />
             );
           })}

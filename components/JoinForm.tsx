@@ -47,10 +47,7 @@ export function JoinForm({
             />
           </div>
           {error && <p className="compose-error">{error}</p>}
-          <div
-            className="compose-footer"
-            style={{ marginTop: 16, justifyContent: "flex-end" }}
-          >
+          <div className="setup-actions">
             <button
               type="submit"
               className="pill pill-primary"

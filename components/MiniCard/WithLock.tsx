@@ -1,6 +1,5 @@
 "use client";
 
-import { useEditableCard } from "@/lib/hooks/useEditableCard";
 import type { Card, Reaction } from "@/lib/db/schema";
 
 import { MiniCard } from "./index";
@@ -11,22 +10,21 @@ import { SortableMiniCard } from "./SortableMiniCard";
  * reload right after creation doesn't replay it on every visible card. */
 const FRESH_WINDOW_MS = 2500;
 
-/**
- * Computes the 24h editable state per-card so the lock flips automatically
- * once the window closes.
- */
+/** Editable iff the card belongs to today. */
 export function MiniCardWithLock({
   card,
   reactions,
   isOwn,
   sortable,
+  today,
 }: {
   card: Card;
   reactions: Reaction[];
   isOwn: boolean;
   sortable: boolean;
+  today: string;
 }) {
-  const editable = useEditableCard(card.date);
+  const editable = card.date === today;
   const isFresh = Date.now() - card.createdAt.getTime() < FRESH_WINDOW_MS;
 
   if (sortable && isOwn && editable) {

@@ -12,6 +12,7 @@ import {
 } from "@/app/actions/reactions";
 import type { CanvasData } from "@/app/actions/data";
 import { GiphyPicker } from "@/components/Composer/GiphyPicker";
+import { useEscapeKey } from "@/lib/hooks/useEscapeKey";
 import type { PickerSelection } from "@/lib/giphy-types";
 import type { Reaction } from "@/lib/db/schema";
 
@@ -318,16 +319,7 @@ function ReactionPreview({
   reaction: Reaction;
   onClose: () => void;
 }) {
-  useEffect(() => {
-    function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        event.stopPropagation();
-        onClose();
-      }
-    }
-    window.addEventListener("keydown", onKey, true);
-    return () => window.removeEventListener("keydown", onKey, true);
-  }, [onClose]);
+  useEscapeKey(onClose);
 
   if (typeof document === "undefined") return null;
 

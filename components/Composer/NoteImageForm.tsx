@@ -9,7 +9,7 @@ import {
   createNoteImageAction,
 } from "@/app/actions/cards";
 import { uploadImageAction } from "@/app/actions/upload";
-import { processImage, UnsupportedImageTypeError } from "@/lib/image";
+import { processImage, IMAGE_ACCEPT_ATTR } from "@/lib/image";
 import { AutoGrowTextarea } from "@/components/AutoGrowTextarea";
 import { useSubmitMorph } from "@/lib/hooks/useSubmitMorph";
 import type { PickerSelection } from "@/lib/giphy-types";
@@ -17,6 +17,12 @@ import type { PickerSelection } from "@/lib/giphy-types";
 import { GiphyPicker } from "./GiphyPicker";
 
 type Status = "idle" | "processing" | "uploading";
+
+const STATUS_LABEL: Record<Status, string> = {
+  idle: "save",
+  processing: "compressing",
+  uploading: "uploading",
+};
 
 export function NoteImageForm({
   today,
@@ -69,29 +75,19 @@ export function NoteImageForm({
       } else {
         await createImageAction(createFd);
       }
-      qc.invalidateQueries({ queryKey: ["canvas"] });
+      // Flash before invalidating so the form unmounts cleanly before
+      // the just-saved card refetches in.
       await flash();
+      qc.invalidateQueries({ queryKey: ["canvas"] });
       onDone();
     } catch (err) {
-      const message =
-        err instanceof UnsupportedImageTypeError
-          ? err.message
-          : err instanceof Error
-            ? err.message
-            : "Upload failed.";
-      setError(message);
+      setError(err instanceof Error ? err.message : "Upload failed.");
       setStatus("idle");
     }
   }
 
   const busy = status !== "idle" || saved;
-  const saveLabel = saved
-    ? "✓"
-    : status === "processing"
-      ? "compressing"
-      : status === "uploading"
-        ? "uploading"
-        : "save";
+  const saveLabel = saved ? "✓" : STATUS_LABEL[status];
   const hasMedia = Boolean(file || giphyUrl);
 
   function pickFile(next: File | null) {
@@ -129,7 +125,7 @@ export function NoteImageForm({
           <label className="file-pill">
             <input
               type="file"
-              accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/gif"
+              accept={IMAGE_ACCEPT_ATTR}
               disabled={busy}
               onChange={(event) =>
                 pickFile(event.target.files?.[0] ?? null)

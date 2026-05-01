@@ -21,31 +21,24 @@ const MAX_VIDEO_BYTES = 25 * 1024 * 1024;
 
 export class UnsupportedImageTypeError extends Error {}
 
-export const MEDIA_ACCEPT_ATTR =
-  "image/jpeg,image/png,image/webp,image/heic,image/heif,image/gif," +
-  "video/mp4,video/webm,video/quicktime";
+export const IMAGE_ACCEPT_ATTR = [...ACCEPTED_IMAGE].join(",");
+export const MEDIA_ACCEPT_ATTR = [...ACCEPTED_IMAGE, ...ACCEPTED_VIDEO].join(",");
+
+// Some HEIC/MOV files come through with an empty MIME — fall back to extension.
+const MIME_BY_EXT: Record<string, string> = {
+  heic: "image/heic",
+  heif: "image/heif",
+  gif: "image/gif",
+  webp: "image/webp",
+  mp4: "video/mp4",
+  webm: "video/webm",
+  mov: "video/quicktime",
+};
 
 function detectMime(file: File): string {
   if (file.type) return file.type;
-  // Some HEIC/MOV files come through with an empty MIME — fall back to extension.
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
-  switch (ext) {
-    case "heic":
-    case "heif":
-      return `image/${ext}`;
-    case "gif":
-      return "image/gif";
-    case "webp":
-      return "image/webp";
-    case "mp4":
-      return "video/mp4";
-    case "webm":
-      return "video/webm";
-    case "mov":
-      return "video/quicktime";
-    default:
-      return "";
-  }
+  return MIME_BY_EXT[ext] ?? "";
 }
 
 function rewrapWithMime(file: File, mime: string): File {

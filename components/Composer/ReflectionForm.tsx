@@ -38,8 +38,10 @@ export function ReflectionForm({
         startTransition(async () => {
           try {
             await createReflectionAction(fd);
-            qc.invalidateQueries({ queryKey: ["canvas"] });
+            // Flash before invalidating so the form unmounts cleanly before
+            // the just-saved card refetches in.
             await flash();
+            qc.invalidateQueries({ queryKey: ["canvas"] });
             onDone();
           } catch (err) {
             setError(err instanceof Error ? err.message : "Save failed.");

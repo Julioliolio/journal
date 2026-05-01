@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 
 import { uploadImageAction } from "@/app/actions/upload";
-import { processMedia, UnsupportedImageTypeError } from "@/lib/image";
+import { processMedia } from "@/lib/image";
 
 export type ImageUploadStatus =
   | "idle"
@@ -28,13 +28,7 @@ export function useImageUpload() {
         setStatus("idle");
         return url;
       } catch (err) {
-        const message =
-          err instanceof UnsupportedImageTypeError
-            ? err.message
-            : err instanceof Error
-              ? err.message
-              : "Upload failed.";
-        setError(message);
+        setError(err instanceof Error ? err.message : "Upload failed.");
         setStatus("error");
         return null;
       }

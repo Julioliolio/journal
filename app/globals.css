@@ -1380,6 +1380,13 @@ textarea {
   border-color: var(--color-ink-soft);
 }
 
+.setup-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  justify-content: flex-end;
+}
+
 /* ---------- animations ---------- */
 
 @keyframes card-enter {
@@ -1605,15 +1612,15 @@ textarea {
 /* ---------- giphy picker (modal overlay) ---------- */
 
 .image-pick-preview {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
+  display: block;
+  width: 100%;
 }
 
 .image-pick-preview img {
   display: block;
-  max-height: 220px;
-  max-width: 100%;
+  width: 100%;
+  max-height: 300px;
+  object-fit: cover;
   border-radius: 10px;
   background: var(--color-line-soft);
 }

@@ -99,14 +99,8 @@ async function insertCardOnToday(
     personKey,
     date,
     type,
-    text: values.text ?? null,
-    imageUrl: values.imageUrl ?? null,
-    imageCaption: values.imageCaption ?? null,
-    reflectionDid: values.reflectionDid ?? null,
-    reflectionLearned: values.reflectionLearned ?? null,
-    reflectionFelt: values.reflectionFelt ?? null,
-    reflectionFeltImageUrl: values.reflectionFeltImageUrl ?? null,
     position,
+    ...values,
   });
   revalidatePath("/");
 }
@@ -247,58 +241,6 @@ export async function deleteCardAction(formData: FormData): Promise<void> {
   await db.delete(cards).where(eq(cards.id, id));
   await deleteBlobs([card.imageUrl, card.reflectionFeltImageUrl]);
   revalidatePath("/");
-}
-
-async function neighborSwap(
-  id: string,
-  direction: "up" | "down",
-  clientToday: string,
-): Promise<void> {
-  const personKey = await requireUser();
-  const target = await db.select().from(cards).where(eq(cards.id, id)).limit(1);
-  const card = target[0];
-  if (!card) throw new Error("Card not found.");
-  if (card.personKey !== personKey) throw new Error("Not your card.");
-  if (card.date !== clientToday) {
-    throw new Error("Only today's cards can be reordered.");
-  }
-
-  const siblings = await db
-    .select()
-    .from(cards)
-    .where(and(eq(cards.personKey, personKey), eq(cards.date, card.date)));
-  // Render order is position DESC, so "up" = higher position (newer/top).
-  siblings.sort((a, b) => b.position - a.position);
-  const idx = siblings.findIndex((s) => s.id === id);
-  const swapWith =
-    direction === "up" ? siblings[idx - 1] : siblings[idx + 1];
-  if (!swapWith) return; // already at edge
-
-  await db.transaction(async (tx) => {
-    await tx
-      .update(cards)
-      .set({ position: swapWith.position, updatedAt: new Date() })
-      .where(eq(cards.id, card.id));
-    await tx
-      .update(cards)
-      .set({ position: card.position, updatedAt: new Date() })
-      .where(eq(cards.id, swapWith.id));
-  });
-  revalidatePath("/");
-}
-
-export async function moveCardUpAction(formData: FormData): Promise<void> {
-  const id = String(formData.get("id") ?? "").trim();
-  if (!id) throw new Error("Missing card id.");
-  const clientToday = readClientToday(formData);
-  await neighborSwap(id, "up", clientToday);
-}
-
-export async function moveCardDownAction(formData: FormData): Promise<void> {
-  const id = String(formData.get("id") ?? "").trim();
-  if (!id) throw new Error("Missing card id.");
-  const clientToday = readClientToday(formData);
-  await neighborSwap(id, "down", clientToday);
 }
 
 export async function reorderCardsAction(input: {

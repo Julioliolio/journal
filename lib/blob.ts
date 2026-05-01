@@ -30,23 +30,17 @@ function useLocalStorage(): boolean {
   return !process.env.BLOB_READ_WRITE_TOKEN;
 }
 
+const EXT_BY_MIME: Record<string, string> = {
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/gif": "gif",
+  "video/mp4": "mp4",
+  "video/webm": "webm",
+  "video/quicktime": "mov",
+};
+
 function extFor(file: File): string {
-  switch (file.type) {
-    case "image/png":
-      return "png";
-    case "image/webp":
-      return "webp";
-    case "image/gif":
-      return "gif";
-    case "video/mp4":
-      return "mp4";
-    case "video/webm":
-      return "webm";
-    case "video/quicktime":
-      return "mov";
-    default:
-      return "jpg";
-  }
+  return EXT_BY_MIME[file.type] ?? "jpg";
 }
 
 export async function uploadImageBlob(file: File): Promise<string> {

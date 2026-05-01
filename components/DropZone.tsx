@@ -5,7 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { createImageAction } from "@/app/actions/cards";
 import { uploadImageAction } from "@/app/actions/upload";
-import { processImage, UnsupportedImageTypeError } from "@/lib/image";
+import { processImage } from "@/lib/image";
 
 type Status =
   | { kind: "idle" }
@@ -42,12 +42,7 @@ export function DropZone({
       qc.invalidateQueries({ queryKey: ["canvas"] });
       setStatus({ kind: "idle" });
     } catch (err) {
-      const message =
-        err instanceof UnsupportedImageTypeError
-          ? err.message
-          : err instanceof Error
-            ? err.message
-            : "Upload failed.";
+      const message = err instanceof Error ? err.message : "Upload failed.";
       setStatus({ kind: "error", message });
       setTimeout(() => setStatus({ kind: "idle" }), 3000);
     }

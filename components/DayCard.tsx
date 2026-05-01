@@ -22,7 +22,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useWebHaptics } from "web-haptics/react";
 
 import { reorderCardsAction } from "@/app/actions/cards";
-import { formatDayHeader, todayISO } from "@/lib/date";
+import { formatDayHeader } from "@/lib/date";
 import type { Card, Reaction } from "@/lib/db/schema";
 
 import { Composer } from "./Composer";
@@ -34,14 +34,15 @@ export function DayCard({
   cards,
   reactionsByCardId,
   isOwn,
-  isToday,
+  today,
 }: {
   date: string;
   cards: Card[]; // already sorted DESC by position (newest first)
   reactionsByCardId: Map<string, Reaction[]>;
   isOwn: boolean;
-  isToday: boolean;
+  today: string;
 }) {
+  const isToday = date === today;
   const reflectionExists = cards.some((c) => c.type === "reflection");
 
   return (
@@ -58,7 +59,7 @@ export function DayCard({
         cards={cards}
         reactionsByCardId={reactionsByCardId}
         isOwn={isOwn}
-        isToday={isToday}
+        today={today}
       />
     </article>
   );
@@ -76,14 +77,15 @@ function DayBody({
   cards,
   reactionsByCardId,
   isOwn,
-  isToday,
+  today,
 }: {
   date: string;
   cards: Card[];
   reactionsByCardId: Map<string, Reaction[]>;
   isOwn: boolean;
-  isToday: boolean;
+  today: string;
 }) {
+  const isToday = date === today;
   const qc = useQueryClient();
   const haptic = useWebHaptics();
   const [mounted, setMounted] = useState(false);
@@ -94,9 +96,10 @@ function DayBody({
   const [activeId, setActiveId] = useState<string | null>(null);
 
   // Reset local order when the underlying cards array changes.
-  const incomingIds = cards.map((c) => c.id).join(",");
-  const localIds = orderedIds.join(",");
-  if (incomingIds !== localIds) {
+  const sameOrder =
+    orderedIds.length === cards.length &&
+    orderedIds.every((id, i) => id === cards[i]!.id);
+  if (!sameOrder) {
     setOrderedIds(cards.map((c) => c.id));
   }
 
@@ -129,6 +132,7 @@ function DayBody({
             reactions={reactionsByCardId.get(c.id) ?? []}
             isOwn={isOwn}
             sortable={false}
+            today={today}
           />
         ))}
       </div>
@@ -157,7 +161,7 @@ function DayBody({
       await reorderCardsAction({
         date,
         orderedIds: next,
-        clientToday: todayISO(),
+        clientToday: today,
       });
       qc.invalidateQueries({ queryKey: ["canvas"] });
     } catch {
@@ -184,6 +188,7 @@ function DayBody({
               reactions={reactionsByCardId.get(c.id) ?? []}
               isOwn={true}
               sortable={true}
+              today={today}
             />
           ))}
         </div>

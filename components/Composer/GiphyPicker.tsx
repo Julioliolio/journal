@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { searchGiphyAction } from "@/app/actions/giphy";
+import { useEscapeKey } from "@/lib/hooks/useEscapeKey";
 import type { GiphyItem, PickerSelection } from "@/lib/giphy-types";
 
 export type { PickerSelection };
@@ -58,9 +59,8 @@ export function GiphyPicker({
       return;
     }
     const id = ++requestRef.current;
-    let cancelled = false;
     const handle = setTimeout(async () => {
-      if (cancelled) return;
+      if (requestRef.current !== id) return;
       setLoading(true);
       setLoadingMore(false);
       setError(null);
@@ -68,12 +68,12 @@ export function GiphyPicker({
       setHasMore(true);
       try {
         const results = await searchGiphyAction(query, 0, tab);
-        if (cancelled || requestRef.current !== id) return;
+        if (requestRef.current !== id) return;
         setItems(results);
         setHasMore(results.length >= PAGE_SIZE);
         setLoading(false);
       } catch (err) {
-        if (cancelled || requestRef.current !== id) return;
+        if (requestRef.current !== id) return;
         // Server-action errors are masked in production with a long
         // "omitted in production builds" boilerplate. Replace it with
         // something a guest can actually act on.
@@ -86,10 +86,7 @@ export function GiphyPicker({
         setLoading(false);
       }
     }, query.trim() ? 280 : 0);
-    return () => {
-      cancelled = true;
-      clearTimeout(handle);
-    };
+    return () => clearTimeout(handle);
   }, [query, tab, isEmoji]);
 
   useEffect(() => {
@@ -118,16 +115,7 @@ export function GiphyPicker({
     return () => grid.removeEventListener("scroll", onScroll);
   }, [isEmoji, items.length, query, tab, loading, loadingMore, hasMore, error]);
 
-  useEffect(() => {
-    function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        event.stopPropagation();
-        onClose();
-      }
-    }
-    window.addEventListener("keydown", onKey, true);
-    return () => window.removeEventListener("keydown", onKey, true);
-  }, [onClose]);
+  useEscapeKey(onClose);
 
   const filteredEmojis = (() => {
     if (!isEmoji) return EMOJI_PALETTE;
