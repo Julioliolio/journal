@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Runs the same checks Vercel will run, before you push.
+# Bypass with: git push --no-verify
+set -e
+
+cd "$(git rev-parse --show-toplevel)"
+
+echo "→ checking pnpm-lock.yaml is in sync with package.json…"
+pnpm install --frozen-lockfile --prefer-offline >/dev/null
+
+echo "→ typecheck…"
+pnpm typecheck
+
+echo "✓ preflight passed"
