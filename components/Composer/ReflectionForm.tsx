@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useWebHaptics } from "web-haptics/react";
 
 import { createReflectionAction } from "@/app/actions/cards";
 import { AutoGrowTextarea } from "@/components/AutoGrowTextarea";
@@ -21,6 +22,7 @@ export function ReflectionForm({
   const [feltImageUrl, setFeltImageUrl] = useState<string | null>(null);
   const { saved, flash } = useSubmitMorph();
   const qc = useQueryClient();
+  const haptic = useWebHaptics();
   const busy = pending || saved;
 
   return (
@@ -34,9 +36,11 @@ export function ReflectionForm({
           try {
             await createReflectionAction(fd);
             qc.invalidateQueries({ queryKey: ["canvas"] });
+            haptic.trigger("success");
             await flash();
             onDone();
           } catch (err) {
+            haptic.trigger("error");
             setError(err instanceof Error ? err.message : "Save failed.");
           }
         });

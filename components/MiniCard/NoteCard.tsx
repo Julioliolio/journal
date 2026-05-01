@@ -6,17 +6,20 @@ import remarkGfm from "remark-gfm";
 
 import { AutoGrowTextarea } from "@/components/AutoGrowTextarea";
 import { useSubmitMorph } from "@/lib/hooks/useSubmitMorph";
-import type { Card } from "@/lib/db/schema";
+import type { Card, Reaction } from "@/lib/db/schema";
 
 import { EditMenu, useUpdateCard } from "./EditMenu";
+import { Reactions } from "./Reactions";
 
 export function NoteCard({
   card,
+  reactions,
   isOwn,
   editable,
   isFresh = false,
 }: {
   card: Card;
+  reactions: Reaction[];
   isOwn: boolean;
   editable: boolean;
   isFresh?: boolean;
@@ -82,6 +85,12 @@ export function NoteCard({
           {card.text ?? ""}
         </ReactMarkdown>
       </div>
+      <Reactions
+        cardId={card.id}
+        reactions={reactions}
+        canAdd={!isOwn || !editable}
+        canRemove={isOwn}
+      />
       {isOwn && editable && (
         <EditMenu card={card} onEdit={() => setEditing(true)} />
       )}

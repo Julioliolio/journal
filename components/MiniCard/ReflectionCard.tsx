@@ -7,17 +7,20 @@ import { FeltImagePicker } from "@/components/Composer/FeltImagePicker";
 import { useImageUpload } from "@/lib/hooks/useImageUpload";
 import { useSubmitMorph } from "@/lib/hooks/useSubmitMorph";
 import { isVideoUrl } from "@/lib/image";
-import type { Card } from "@/lib/db/schema";
+import type { Card, Reaction } from "@/lib/db/schema";
 
 import { EditMenu, useUpdateCard } from "./EditMenu";
+import { Reactions } from "./Reactions";
 
 export function ReflectionCard({
   card,
+  reactions,
   isOwn,
   editable,
   isFresh = false,
 }: {
   card: Card;
+  reactions: Reaction[];
   isOwn: boolean;
   editable: boolean;
   isFresh?: boolean;
@@ -158,6 +161,12 @@ export function ReflectionCard({
         label="felt"
         value={card.reflectionFelt}
         imageUrl={card.reflectionFeltImageUrl}
+      />
+      <Reactions
+        cardId={card.id}
+        reactions={reactions}
+        canAdd={!isOwn || !editable}
+        canRemove={isOwn}
       />
       {isOwn && editable && (
         <EditMenu card={card} onEdit={() => setEditing(true)} />

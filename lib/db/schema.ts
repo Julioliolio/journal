@@ -61,8 +61,33 @@ export const cards = sqliteTable(
   ],
 );
 
+// Anonymous guest reactions attached to a card. Two kinds:
+//   - "emoji" → content is the emoji char (e.g. "😀"); width/height unused.
+//   - "gif"   → content is a GIPHY embed URL; width/height set for sizing.
+// No identity — anyone visiting the public canvas can react; only authors
+// can remove. Cascade-deleted when the parent card is removed.
+export const reactions = sqliteTable(
+  "reactions",
+  {
+    id: text("id").primaryKey(),
+    cardId: text("card_id")
+      .notNull()
+      .references(() => cards.id, { onDelete: "cascade" }),
+    kind: text("kind", { enum: ["emoji", "gif"] }).notNull(),
+    content: text("content").notNull(),
+    width: integer("width"),
+    height: integer("height"),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (t) => [index("idx_reactions_card_id_created").on(t.cardId, t.createdAt)],
+);
+
 export type Card = typeof cards.$inferSelect;
 export type NewCard = typeof cards.$inferInsert;
 export type Partners = typeof partners.$inferSelect;
+export type Reaction = typeof reactions.$inferSelect;
+export type NewReaction = typeof reactions.$inferInsert;
 export type PersonKey = "name1" | "name2";
 export type CardType = "note" | "image" | "note_image" | "reflection";

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { formatDayHeader } from "@/lib/date";
-import type { Card, PersonKey } from "@/lib/db/schema";
+import type { Card, PersonKey, Reaction } from "@/lib/db/schema";
 
 import { DayCard } from "./DayCard";
 import { DropZone } from "./DropZone";
@@ -12,12 +12,14 @@ export function Half({
   personKey,
   label,
   cards,
+  reactionsByCardId,
   today,
   isOwn,
 }: {
   personKey: PersonKey;
   label: string;
   cards: Card[];
+  reactionsByCardId: Map<string, Reaction[]>;
   today: string;
   isOwn: boolean;
 }) {
@@ -198,6 +200,7 @@ export function Half({
                 key={date}
                 date={date}
                 cards={dayCards}
+                reactionsByCardId={reactionsByCardId}
                 isOwn={isOwn}
                 isToday={date === today}
               />

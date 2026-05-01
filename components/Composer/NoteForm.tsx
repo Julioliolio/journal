@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useWebHaptics } from "web-haptics/react";
 
 import { createNoteAction } from "@/app/actions/cards";
 import { AutoGrowTextarea } from "@/components/AutoGrowTextarea";
@@ -17,6 +18,7 @@ export function NoteForm({
   const [pending, startTransition] = useTransition();
   const { saved, flash } = useSubmitMorph();
   const qc = useQueryClient();
+  const haptic = useWebHaptics();
   const busy = pending || saved;
 
   return (
@@ -26,10 +28,15 @@ export function NoteForm({
         fd.set("date", today);
         fd.set("clientToday", today);
         startTransition(async () => {
-          await createNoteAction(fd);
-          qc.invalidateQueries({ queryKey: ["canvas"] });
-          await flash();
-          onDone();
+          try {
+            await createNoteAction(fd);
+            qc.invalidateQueries({ queryKey: ["canvas"] });
+            haptic.trigger("success");
+            await flash();
+            onDone();
+          } catch {
+            haptic.trigger("error");
+          }
         });
       }}
       onKeyDown={(event) => {

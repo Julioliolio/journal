@@ -19,10 +19,11 @@ import {
 } from "@dnd-kit/sortable";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useWebHaptics } from "web-haptics/react";
 
 import { reorderCardsAction } from "@/app/actions/cards";
 import { formatDayHeader, todayISO } from "@/lib/date";
-import type { Card } from "@/lib/db/schema";
+import type { Card, Reaction } from "@/lib/db/schema";
 
 import { Composer } from "./Composer";
 import { MiniCard } from "./MiniCard";
@@ -31,11 +32,13 @@ import { MiniCardWithLock } from "./MiniCard/WithLock";
 export function DayCard({
   date,
   cards,
+  reactionsByCardId,
   isOwn,
   isToday,
 }: {
   date: string;
   cards: Card[]; // already sorted DESC by position (newest first)
+  reactionsByCardId: Map<string, Reaction[]>;
   isOwn: boolean;
   isToday: boolean;
 }) {
@@ -50,28 +53,39 @@ export function DayCard({
       {isToday && isOwn && (
         <Composer today={date} reflectionExists={reflectionExists} />
       )}
-      <DayBody date={date} cards={cards} isOwn={isOwn} isToday={isToday} />
+      <DayBody
+        date={date}
+        cards={cards}
+        reactionsByCardId={reactionsByCardId}
+        isOwn={isOwn}
+        isToday={isToday}
+      />
     </article>
   );
 }
 
 function EmptyHint({ isToday, isOwn }: { isToday: boolean; isOwn: boolean }) {
   if (!(isToday && isOwn)) return null;
-  return <p className="empty-quiet">drop, paste, or pick a pill above.</p>;
+  return (
+    <p className="empty-quiet">hover to add — or drop / paste an image.</p>
+  );
 }
 
 function DayBody({
   date,
   cards,
+  reactionsByCardId,
   isOwn,
   isToday,
 }: {
   date: string;
   cards: Card[];
+  reactionsByCardId: Map<string, Reaction[]>;
   isOwn: boolean;
   isToday: boolean;
 }) {
   const qc = useQueryClient();
+  const haptic = useWebHaptics();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const [orderedIds, setOrderedIds] = useState<string[]>(() =>
@@ -112,6 +126,7 @@ function DayBody({
           <MiniCardWithLock
             key={c.id}
             card={c}
+            reactions={reactionsByCardId.get(c.id) ?? []}
             isOwn={isOwn}
             sortable={false}
           />
@@ -137,6 +152,7 @@ function DayBody({
     if (oldIndex < 0 || newIndex < 0) return;
     const next = arrayMove(orderedIds, oldIndex, newIndex);
     setOrderedIds(next);
+    haptic.trigger("medium");
     try {
       await reorderCardsAction({
         date,
@@ -145,7 +161,7 @@ function DayBody({
       });
       qc.invalidateQueries({ queryKey: ["canvas"] });
     } catch {
-      // revert on failure
+      haptic.trigger("error");
       setOrderedIds(cards.map((c) => c.id));
     }
   }
@@ -166,6 +182,7 @@ function DayBody({
             <MiniCardWithLock
               key={c.id}
               card={c}
+              reactions={reactionsByCardId.get(c.id) ?? []}
               isOwn={true}
               sortable={true}
             />

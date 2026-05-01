@@ -1576,3 +1576,509 @@ textarea {
   background: rgba(27, 26, 24, 0.55);
   border-color: rgba(241, 237, 228, 0.28);
 }
+
+/* ---------- giphy picker (modal overlay) ---------- */
+
+.image-pick-preview {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.image-pick-preview img {
+  display: block;
+  max-height: 220px;
+  max-width: 100%;
+  border-radius: 10px;
+  background: var(--color-line-soft);
+}
+
+.giphy-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(27, 26, 24, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.giphy-panel {
+  display: flex;
+  flex-direction: column;
+  width: min(720px, 100%);
+  max-height: 80vh;
+  background: var(--color-paper);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-day);
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
+}
+
+.giphy-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--color-line);
+}
+
+.giphy-search {
+  flex: 1;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--color-day);
+  border: 1px solid var(--color-line);
+  font-size: 14px;
+  color: var(--color-ink);
+  caret-color: var(--color-ink);
+  transition: border-color 140ms ease;
+}
+
+.giphy-search::placeholder {
+  color: var(--color-ink-mute);
+}
+
+.giphy-search:focus {
+  border-color: var(--color-ink-soft);
+}
+
+.giphy-error {
+  margin: 8px 14px 0;
+}
+
+.giphy-grid {
+  flex: 1;
+  column-count: 3;
+  column-gap: 8px;
+  padding: 12px 14px;
+  overflow-y: auto;
+}
+
+.giphy-tile {
+  display: block;
+  width: 100%;
+  margin: 0 0 8px;
+  padding: 0;
+  background: var(--color-line-soft);
+  border-radius: 8px;
+  border: 0;
+  overflow: hidden;
+  cursor: pointer;
+  break-inside: avoid;
+  transition: transform 140ms ease, outline 140ms ease;
+  outline: 0 solid transparent;
+}
+
+.giphy-tile:hover:not(:disabled) {
+  transform: scale(0.985);
+  outline: 2px solid var(--color-ink);
+  outline-offset: -2px;
+}
+
+.giphy-tile:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.giphy-tile:disabled {
+  opacity: 0.4;
+  cursor: progress;
+}
+
+.giphy-tile img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.giphy-empty {
+  padding: 32px 4px;
+  text-align: center;
+  color: var(--color-ink-soft);
+  font-size: 13px;
+  column-span: all;
+}
+
+.giphy-footer {
+  padding: 10px 14px;
+  border-top: 1px solid var(--color-line);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--color-ink-mute);
+  text-transform: uppercase;
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .giphy-modal {
+    padding: 12px;
+  }
+  .giphy-panel {
+    max-height: 92vh;
+  }
+  .giphy-grid {
+    column-count: 2;
+  }
+}
+
+/* Stickers/GIFs tab toggle in the picker header. */
+.giphy-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--color-line-soft);
+  border: 1px solid var(--color-line);
+}
+
+.giphy-tab {
+  padding: 5px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--color-ink-soft);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: lowercase;
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    background 140ms ease,
+    color 140ms ease;
+}
+
+.giphy-tab:hover {
+  color: var(--color-ink);
+}
+
+.giphy-tab[aria-selected="true"] {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+/* Sticker tiles render with transparency; the soft tinted tile background
+   is enough to keep them legible without a heavy frame. */
+.giphy-grid[data-media="stickers"] .giphy-tile {
+  background: var(--color-line-soft);
+}
+
+/* ---------- card reactions (anonymous Slack-style chips) ---------- */
+
+/* Sits inline at the end of card content, hugging the right edge. Small,
+   wraps right-to-left if many. Empty state is just the discreet "+" that
+   reveals on hover, so unreacted cards stay completely clean. */
+.reactions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-top: 8px;
+  min-height: 22px;
+}
+
+/* When the card has no reactions, the row collapses to zero so text below
+   sits flush. We also pull it out of normal flow with position:absolute so
+   the hover-revealed "+" doesn't reflow the card — that reflow combined
+   with dnd-kit's sortable transform on the user's own side caused visible
+   jitter as the cursor's relative position changed mid-transition. */
+.reactions[data-empty] {
+  height: 0;
+  min-height: 0;
+  margin-top: 0;
+  overflow: hidden;
+  transition: height 180ms ease;
+}
+
+.card-shell > .reactions[data-empty] {
+  position: absolute;
+  right: 18px;
+  bottom: 16px;
+  margin: 0;
+}
+
+.card-shell:hover .reactions[data-empty],
+.card-shell:focus-within .reactions[data-empty],
+.reactions[data-empty][data-reveal] {
+  height: 24px;
+}
+
+/* All chips share the same rounded-square shape so they nest concentrically
+   inside the floating container (chip_radius + container_padding). */
+.reaction-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-line-soft);
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  line-height: 1;
+  cursor: default;
+  animation: card-enter 220ms ease-out both;
+}
+
+.reaction-chip-emoji {
+  padding: 2px 8px;
+  height: 24px;
+  font-size: 14px;
+}
+
+.reaction-emoji {
+  display: inline-block;
+  line-height: 1;
+}
+
+.reaction-chip-gif {
+  padding: 2px;
+  height: 30px;
+}
+
+.reaction-chip-gif img {
+  display: block;
+  height: 24px;
+  width: auto;
+  max-width: 64px;
+  object-fit: contain;
+  border-radius: 5px;
+}
+
+.reaction-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border-radius: 999px;
+  background: var(--color-ink);
+  color: var(--color-paper);
+  border: 2px solid var(--color-paper);
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(0.85);
+  transition:
+    opacity 140ms ease,
+    transform 140ms ease;
+}
+
+.reaction-chip:hover .reaction-remove,
+.reaction-chip:focus-within .reaction-remove {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.reaction-remove:disabled {
+  cursor: progress;
+  opacity: 0.5;
+}
+
+/* Discreet "+" — invisible until the card is hovered or already has
+   reactions. Keeps cards clean when nobody has reacted. */
+/* Collapses to width 0 + negative margin (cancels the row gap) when not
+   hovered, so chips right-justify cleanly. Expands on hover or long-press. */
+.reaction-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0;
+  height: 24px;
+  padding: 0;
+  margin-left: -4px;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-ink-soft);
+  border: 0;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  overflow: hidden;
+  transition:
+    width 180ms ease,
+    margin-left 180ms ease,
+    opacity 180ms ease,
+    color 140ms ease,
+    background 140ms ease;
+}
+
+.reaction-add svg {
+  flex-shrink: 0;
+}
+
+/* "+N" overflow chip — always visible (shows there are hidden reactions),
+   solid like a real chip rather than dashed like the add button. */
+.reaction-overflow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 8px;
+  background: var(--color-line-soft);
+  border: 1px solid var(--color-line);
+  color: var(--color-ink-soft);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    color 140ms ease,
+    border-color 140ms ease,
+    background 140ms ease;
+}
+
+.reaction-overflow:hover {
+  color: var(--color-ink);
+  border-color: var(--color-ink-soft);
+  background: var(--color-paper);
+}
+
+.card-dark .reaction-overflow {
+  background: rgba(241, 237, 228, 0.08);
+  border-color: rgba(241, 237, 228, 0.16);
+  color: var(--color-night-ink-soft);
+}
+
+.card-dark .reaction-overflow:hover {
+  color: var(--color-night-ink);
+  border-color: rgba(241, 237, 228, 0.32);
+}
+
+.card-shell:hover .reaction-add,
+.card-shell:focus-within .reaction-add,
+.reactions[data-reveal] .reaction-add {
+  width: 24px;
+  margin-left: 0;
+  opacity: 1;
+}
+
+.reaction-add:hover:not(:disabled) {
+  color: var(--color-ink);
+  background: var(--color-line-soft);
+}
+
+.reaction-add:disabled {
+  cursor: progress;
+  opacity: 0.5;
+}
+
+.reaction-error {
+  flex-basis: 100%;
+  text-align: right;
+  font-size: 12px;
+  color: var(--color-ink-soft);
+}
+
+/* Image card: overlay reactions in the bottom-right corner over the photo
+   instead of pushing layout. Sits with a translucent backdrop so it stays
+   legible on busy images. */
+.card-image-reactions-wrap {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.card-image-reactions-wrap .reactions {
+  margin-top: 0;
+  pointer-events: auto;
+  padding: 4px;
+  /* Concentric with the 8px chips inside (chip_radius + container_padding). */
+  border-radius: 12px;
+  background: rgba(252, 250, 244, 0.78);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.card-image-reactions-wrap .reactions[data-empty] {
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  padding: 0;
+}
+
+/* Don't pad the card-image's note-text bottom now that reactions float. */
+.card-image .image-note {
+  padding-bottom: 14px;
+}
+
+/* Reflection (card-dark) variant. */
+.card-dark .reactions .reaction-chip {
+  background: rgba(241, 237, 228, 0.08);
+  border-color: rgba(241, 237, 228, 0.16);
+  color: var(--color-night-ink);
+}
+
+.card-dark .reaction-add {
+  color: var(--color-night-ink-soft);
+}
+
+.card-dark .reaction-add:hover:not(:disabled) {
+  color: var(--color-night-ink);
+  background: rgba(241, 237, 228, 0.06);
+}
+
+.card-dark .reaction-remove {
+  background: var(--color-night-ink);
+  color: var(--color-night);
+  border-color: var(--color-night);
+}
+
+.card-dark .reaction-error {
+  color: var(--color-night-ink-soft);
+}
+
+:root[data-theme="dark"] .card-image-reactions-wrap .reactions:not([data-empty]) {
+  background: rgba(27, 26, 24, 0.65);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* Emoji + GIFs picker tabs add a third item — keep them tight. */
+.giphy-tabs {
+  flex-wrap: nowrap;
+}
+
+/* Emoji grid: dense, tap-friendly tiles, no GIPHY chrome. */
+.emoji-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  gap: 4px;
+  padding: 12px 14px;
+  overflow-y: auto;
+}
+
+.emoji-tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background 140ms ease,
+    transform 140ms ease;
+}
+
+.emoji-tile:hover {
+  background: var(--color-line-soft);
+  transform: scale(1.1);
+}
+
+.emoji-tile:active {
+  transform: scale(0.95);
+}

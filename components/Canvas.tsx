@@ -1,11 +1,11 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { getCanvasDataAction, type CanvasData } from "@/app/actions/data";
 import { todayISO } from "@/lib/date";
-import type { Partners, PersonKey } from "@/lib/db/schema";
+import type { Partners, PersonKey, Reaction } from "@/lib/db/schema";
 
 import { Half } from "./Half";
 import { ThemeToggle } from "./ThemeToggle";
@@ -32,6 +32,17 @@ export function Canvas({
   const partners = data.partners ?? initialData.partners;
   const currentUser = data.currentUser ?? initialData.currentUser;
   const cards = data.cards;
+  const reactions = data.reactions;
+
+  const reactionsByCardId = useMemo(() => {
+    const map = new Map<string, Reaction[]>();
+    for (const r of reactions) {
+      const arr = map.get(r.cardId);
+      if (arr) arr.push(r);
+      else map.set(r.cardId, [r]);
+    }
+    return map;
+  }, [reactions]);
 
   // Keep today's date label in sync across midnight without a refresh.
   const [today, setToday] = useState(() => todayISO());
@@ -59,6 +70,7 @@ export function Canvas({
         personKey="name2"
         label={partners.name2 as string}
         cards={name2Cards}
+        reactionsByCardId={reactionsByCardId}
         today={today}
         isOwn={currentUser === "name2"}
       />
@@ -102,6 +114,7 @@ export function Canvas({
                 personKey="name1"
                 label={partners.name1}
                 cards={name1Cards}
+                reactionsByCardId={reactionsByCardId}
                 today={today}
                 isOwn={currentUser === "name1"}
               />
@@ -115,6 +128,7 @@ export function Canvas({
             personKey="name1"
             label={partners.name1}
             cards={name1Cards}
+            reactionsByCardId={reactionsByCardId}
             today={today}
             isOwn={currentUser === "name1"}
           />

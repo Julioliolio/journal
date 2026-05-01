@@ -1,7 +1,7 @@
 "use client";
 
 import { useEditableCard } from "@/lib/hooks/useEditableCard";
-import type { Card } from "@/lib/db/schema";
+import type { Card, Reaction } from "@/lib/db/schema";
 
 import { MiniCard } from "./index";
 import { SortableMiniCard } from "./SortableMiniCard";
@@ -17,10 +17,12 @@ const FRESH_WINDOW_MS = 2500;
  */
 export function MiniCardWithLock({
   card,
+  reactions,
   isOwn,
   sortable,
 }: {
   card: Card;
+  reactions: Reaction[];
   isOwn: boolean;
   sortable: boolean;
 }) {
@@ -31,6 +33,7 @@ export function MiniCardWithLock({
     return (
       <SortableMiniCard
         card={card}
+        reactions={reactions}
         isOwn={isOwn}
         editable={editable}
         isFresh={isFresh}
@@ -38,6 +41,12 @@ export function MiniCardWithLock({
     );
   }
   return (
-    <MiniCard card={card} isOwn={isOwn} editable={editable} isFresh={isFresh} />
+    <MiniCard
+      card={card}
+      reactions={reactions}
+      isOwn={isOwn}
+      editable={editable}
+      isFresh={isFresh}
+    />
   );
 }

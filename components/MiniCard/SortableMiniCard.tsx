@@ -3,7 +3,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-import type { Card } from "@/lib/db/schema";
+import type { Card, Reaction } from "@/lib/db/schema";
 
 import { MiniCard } from "./index";
 
@@ -14,11 +14,13 @@ import { MiniCard } from "./index";
  */
 export function SortableMiniCard({
   card,
+  reactions,
   isOwn,
   editable,
   isFresh = false,
 }: {
   card: Card;
+  reactions: Reaction[];
   isOwn: boolean;
   editable: boolean;
   isFresh?: boolean;
@@ -48,7 +50,13 @@ export function SortableMiniCard({
         transition,
       }}
     >
-      <MiniCard card={card} isOwn={isOwn} editable={editable} isFresh={isFresh} />
+      <MiniCard
+        card={card}
+        reactions={reactions}
+        isOwn={isOwn}
+        editable={editable}
+        isFresh={isFresh}
+      />
       <button
         {...attributes}
         {...listeners}

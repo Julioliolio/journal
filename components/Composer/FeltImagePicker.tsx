@@ -1,9 +1,11 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 import { useImageUpload } from "@/lib/hooks/useImageUpload";
 import { isVideoUrl, MEDIA_ACCEPT_ATTR } from "@/lib/image";
+
+import { GiphyPicker } from "./GiphyPicker";
 
 export function FeltImagePicker({
   url,
@@ -17,6 +19,7 @@ export function FeltImagePicker({
 }) {
   const { uploadFile, status, error, busy } = useImageUpload();
   const inputRef = useRef<HTMLInputElement>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   async function handlePick(file: File) {
     const next = await uploadFile(file);
@@ -26,6 +29,14 @@ export function FeltImagePicker({
   function clear() {
     onChange(null);
     if (inputRef.current) inputRef.current.value = "";
+  }
+
+  function pickFromGiphy(picked:
+    | { kind: "gif"; embedUrl: string }
+    | { kind: "emoji" }) {
+    if (picked.kind !== "gif") return;
+    onChange(picked.embedUrl);
+    setPickerOpen(false);
   }
 
   const label = busy
@@ -62,6 +73,14 @@ export function FeltImagePicker({
           />
           {label}
         </label>
+        <button
+          type="button"
+          className="file-pill"
+          disabled={disabled || busy}
+          onClick={() => setPickerOpen(true)}
+        >
+          search GIPHY
+        </button>
         {url && !busy && (
           <button
             type="button"
@@ -74,6 +93,13 @@ export function FeltImagePicker({
         )}
       </div>
       {error && <p className="compose-error">{error}</p>}
+      {pickerOpen && (
+        <GiphyPicker
+          defaultTab="gifs"
+          onPicked={pickFromGiphy}
+          onClose={() => setPickerOpen(false)}
+        />
+      )}
     </div>
   );
 }

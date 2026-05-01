@@ -1,6 +1,10 @@
 import { Canvas } from "@/components/Canvas";
 import { getCurrentUser } from "@/lib/cookies";
-import { getAllCards, getPartners } from "@/lib/db/queries";
+import {
+  getAllCards,
+  getAllReactions,
+  getPartners,
+} from "@/lib/db/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -19,9 +23,10 @@ export default async function Home() {
     );
   }
 
-  const [currentUser, cards] = await Promise.all([
+  const [currentUser, cards, reactions] = await Promise.all([
     getCurrentUser(),
     getAllCards(),
+    getAllReactions(),
   ]);
 
   // Only authors get the secret invite URL embedded — they already know it.
@@ -35,6 +40,7 @@ export default async function Home() {
         partners,
         currentUser,
         cards,
+        reactions,
       }}
       inviteUrl={inviteUrl}
     />

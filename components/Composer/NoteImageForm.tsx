@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useWebHaptics } from "web-haptics/react";
 
 import {
   createImageAction,
@@ -11,6 +12,8 @@ import { uploadImageAction } from "@/app/actions/upload";
 import { processImage, UnsupportedImageTypeError } from "@/lib/image";
 import { AutoGrowTextarea } from "@/components/AutoGrowTextarea";
 import { useSubmitMorph } from "@/lib/hooks/useSubmitMorph";
+
+import { GiphyPicker } from "./GiphyPicker";
 
 type Status = "idle" | "processing" | "uploading";
 
@@ -22,26 +25,36 @@ export function NoteImageForm({
   onDone: () => void;
 }) {
   const [file, setFile] = useState<File | null>(null);
+  const [giphyUrl, setGiphyUrl] = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [text, setText] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string | null>(null);
   const { saved, flash } = useSubmitMorph();
   const qc = useQueryClient();
+  const haptic = useWebHaptics();
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
-    if (!file) {
+    if (!file && !giphyUrl) {
       setError("Pick an image first.");
       return;
     }
     try {
-      setStatus("processing");
-      const processed = await processImage(file);
-      setStatus("uploading");
-      const uploadFd = new FormData();
-      uploadFd.set("file", processed);
-      const url = await uploadImageAction(uploadFd);
+      let url: string;
+      if (giphyUrl) {
+        url = giphyUrl;
+      } else if (file) {
+        setStatus("processing");
+        const processed = await processImage(file);
+        setStatus("uploading");
+        const uploadFd = new FormData();
+        uploadFd.set("file", processed);
+        url = await uploadImageAction(uploadFd);
+      } else {
+        return;
+      }
 
       const createFd = new FormData();
       createFd.set("date", today);
@@ -55,9 +68,11 @@ export function NoteImageForm({
         await createImageAction(createFd);
       }
       qc.invalidateQueries({ queryKey: ["canvas"] });
+      haptic.trigger("success");
       await flash();
       onDone();
     } catch (err) {
+      haptic.trigger("error");
       const message =
         err instanceof UnsupportedImageTypeError
           ? err.message
@@ -77,35 +92,80 @@ export function NoteImageForm({
       : status === "uploading"
         ? "uploading"
         : "save";
+  const hasMedia = Boolean(file || giphyUrl);
+
+  function pickFile(next: File | null) {
+    setError(null);
+    setFile(next);
+    if (next) setGiphyUrl(null);
+  }
+
+  function pickFromGiphy(picked:
+    | { kind: "gif"; embedUrl: string }
+    | { kind: "emoji" }) {
+    if (picked.kind !== "gif") return;
+    setError(null);
+    setGiphyUrl(picked.embedUrl);
+    setFile(null);
+    setPickerOpen(false);
+  }
+
+  function clearMedia() {
+    setFile(null);
+    setGiphyUrl(null);
+  }
 
   return (
     <form
       className="compose"
       onSubmit={submit}
       onKeyDown={(event) => {
-        if (event.key === "Escape" && !busy) {
+        if (event.key === "Escape" && !busy && !pickerOpen) {
           event.preventDefault();
           onDone();
         }
       }}
     >
-      <label className="file-pill">
-        <input
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-          required
-          disabled={busy}
-          onChange={(event) => {
-            setError(null);
-            setFile(event.target.files?.[0] ?? null);
-          }}
-        />
-        {file ? (
-          <span className="file-name">{file.name}</span>
-        ) : (
-          <>choose image</>
-        )}
-      </label>
+      {giphyUrl ? (
+        <div className="image-pick-preview">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={giphyUrl} alt="" />
+          <button
+            type="button"
+            className="pill pill-ghost"
+            onClick={clearMedia}
+            disabled={busy}
+          >
+            change
+          </button>
+        </div>
+      ) : (
+        <div className="compose-row">
+          <label className="file-pill">
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/gif"
+              disabled={busy}
+              onChange={(event) =>
+                pickFile(event.target.files?.[0] ?? null)
+              }
+            />
+            {file ? (
+              <span className="file-name">{file.name}</span>
+            ) : (
+              <>choose image</>
+            )}
+          </label>
+          <button
+            type="button"
+            className="file-pill"
+            disabled={busy}
+            onClick={() => setPickerOpen(true)}
+          >
+            search GIPHY
+          </button>
+        </div>
+      )}
       <AutoGrowTextarea
         className="compose-textarea"
         placeholder="and a note (optional)…"
@@ -129,11 +189,18 @@ export function NoteImageForm({
           type="submit"
           className="pill pill-primary pill-bouncy"
           data-saved={saved || undefined}
-          disabled={busy || !file}
+          disabled={busy || !hasMedia}
         >
           {saveLabel}
         </button>
       </div>
+      {pickerOpen && (
+        <GiphyPicker
+          defaultTab="gifs"
+          onPicked={pickFromGiphy}
+          onClose={() => setPickerOpen(false)}
+        />
+      )}
     </form>
   );
 }
