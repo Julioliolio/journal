@@ -108,11 +108,6 @@ export function NoteImageForm({
     setPickerOpen(false);
   }
 
-  function clearMedia() {
-    setFile(null);
-    setGiphyUrl(null);
-  }
-
   return (
     <form
       className="compose"
@@ -128,14 +123,6 @@ export function NoteImageForm({
         <div className="image-pick-preview">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={giphyUrl} alt="" />
-          <button
-            type="button"
-            className="pill pill-ghost"
-            onClick={clearMedia}
-            disabled={busy}
-          >
-            change
-          </button>
         </div>
       ) : (
         <div className="compose-row">
