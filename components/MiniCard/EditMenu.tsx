@@ -40,9 +40,10 @@ export function EditMenu({
       className={`edit-slot${inset ? " edit-slot-inset" : ""}`}
       data-open={confirming || undefined}
     >
-      <div className="edit-buttons">
+      <div className="edit-buttons" data-confirming={confirming || undefined}>
         {onEdit && (
           <button
+            key="edit"
             type="button"
             className="pill pill-ghost pill-bouncy"
             onClick={onEdit}
@@ -54,16 +55,18 @@ export function EditMenu({
         {confirming ? (
           <>
             <button
+              key="confirm"
               type="button"
-              className="pill pill-primary"
+              className="pill pill-primary pill-bouncy pill-confirm-action"
               onClick={remove}
               disabled={pending}
             >
               confirm delete
             </button>
             <button
+              key="cancel"
               type="button"
-              className="pill pill-ghost"
+              className="pill pill-ghost pill-bouncy pill-confirm-action"
               onClick={() => setConfirming(false)}
               disabled={pending}
             >
@@ -72,8 +75,9 @@ export function EditMenu({
           </>
         ) : (
           <button
+            key="delete"
             type="button"
-            className="pill pill-ghost"
+            className="pill pill-ghost pill-bouncy pill-confirm-action"
             onClick={() => setConfirming(true)}
             disabled={pending}
           >

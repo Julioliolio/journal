@@ -44,7 +44,7 @@ export function FeltImagePicker({
       : "uploading…"
     : url
       ? "replace"
-      : "add image / gif / video";
+      : "add media";
 
   return (
     <div className="felt-picker">

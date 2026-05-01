@@ -1045,6 +1045,31 @@ textarea {
   border-color: var(--color-night-line);
 }
 
+/* "confirm delete" + "cancel" mount when the user clicks delete. They
+   fade + scale in (with a slight stagger) so the new buttons feel like
+   a deliberate reveal rather than a pop. */
+.pill-confirm-action {
+  animation: confirm-action-in 220ms cubic-bezier(0.34, 1.45, 0.55, 1) both;
+  transform-origin: 50% 50%;
+}
+
+/* The second confirm-action button (cancel) lags slightly so the pair
+   reads as a small cascade, not a simultaneous flash. */
+.edit-buttons[data-confirming] .pill-confirm-action + .pill-confirm-action {
+  animation-delay: 70ms;
+}
+
+@keyframes confirm-action-in {
+  from {
+    opacity: 0;
+    transform: scale(0.85) translateX(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateX(0);
+  }
+}
+
 /* ---------- sortable + drag overlay ---------- */
 
 .sortable-wrap {
@@ -1474,6 +1499,7 @@ textarea {
   .composer-pills > *,
   .pill,
   .pill[data-saved],
+  .pill-confirm-action,
   .drag-handle,
   .edit-menu,
   .dropzone-status,
