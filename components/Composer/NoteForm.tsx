@@ -27,16 +27,14 @@ export function NoteForm({
       action={(fd) => {
         fd.set("date", today);
         fd.set("clientToday", today);
+        // Fire synchronously inside the gesture handler — Firefox Android
+        // and iOS Safari both drop the haptic if it lands after an await.
+        haptic.trigger("medium");
         startTransition(async () => {
-          try {
-            await createNoteAction(fd);
-            qc.invalidateQueries({ queryKey: ["canvas"] });
-            haptic.trigger("success");
-            await flash();
-            onDone();
-          } catch {
-            haptic.trigger("error");
-          }
+          await createNoteAction(fd);
+          qc.invalidateQueries({ queryKey: ["canvas"] });
+          await flash();
+          onDone();
         });
       }}
       onKeyDown={(event) => {

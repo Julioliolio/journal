@@ -161,7 +161,6 @@ function DayBody({
       });
       qc.invalidateQueries({ queryKey: ["canvas"] });
     } catch {
-      haptic.trigger("error");
       setOrderedIds(cards.map((c) => c.id));
     }
   }

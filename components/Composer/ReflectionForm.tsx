@@ -32,15 +32,16 @@ export function ReflectionForm({
         fd.set("date", today);
         fd.set("clientToday", today);
         if (feltImageUrl) fd.set("feltImageUrl", feltImageUrl);
+        // Fire synchronously inside the gesture handler — Firefox Android
+        // and iOS Safari both drop the haptic if it lands after an await.
+        haptic.trigger("medium");
         startTransition(async () => {
           try {
             await createReflectionAction(fd);
             qc.invalidateQueries({ queryKey: ["canvas"] });
-            haptic.trigger("success");
             await flash();
             onDone();
           } catch (err) {
-            haptic.trigger("error");
             setError(err instanceof Error ? err.message : "Save failed.");
           }
         });

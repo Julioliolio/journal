@@ -151,7 +151,6 @@ export function Reactions({
         replaceReaction(qc, tempId, real);
       } catch (err) {
         removeReactionFromCache(qc, tempId);
-        haptic.trigger("error");
         setError(err instanceof Error ? err.message : "Couldn't react.");
       }
     });

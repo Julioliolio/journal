@@ -42,6 +42,9 @@ export function NoteImageForm({
       setError("Pick an image first.");
       return;
     }
+    // Fire synchronously inside the gesture handler — Firefox Android and
+    // iOS Safari both drop the haptic if it lands after an await.
+    haptic.trigger("medium");
     try {
       let url: string;
       if (giphyUrl) {
@@ -67,11 +70,9 @@ export function NoteImageForm({
         await createImageAction(createFd);
       }
       qc.invalidateQueries({ queryKey: ["canvas"] });
-      haptic.trigger("success");
       await flash();
       onDone();
     } catch (err) {
-      haptic.trigger("error");
       const message =
         err instanceof UnsupportedImageTypeError
           ? err.message
