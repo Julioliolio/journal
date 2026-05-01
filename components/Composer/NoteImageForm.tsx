@@ -75,10 +75,14 @@ export function NoteImageForm({
       } else {
         await createImageAction(createFd);
       }
-      // Flash before invalidating so the form unmounts cleanly before
-      // the just-saved card refetches in.
-      await flash();
-      qc.invalidateQueries({ queryKey: ["canvas"] });
+      // Run the flash hold and the refetch in parallel, then close.
+      // Awaiting invalidateQueries ensures the just-saved card is in
+      // the cache (and rendered in the day stack) by the time the form
+      // unmounts — no empty gap between form-close and card-in.
+      await Promise.all([
+        flash(),
+        qc.invalidateQueries({ queryKey: ["canvas"] }),
+      ]);
       onDone();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed.");

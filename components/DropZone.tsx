@@ -39,7 +39,9 @@ export function DropZone({
       createFd.set("clientToday", today);
       createFd.set("imageUrl", url);
       await createImageAction(createFd);
-      qc.invalidateQueries({ queryKey: ["canvas"] });
+      // Hold the "uploading…" indicator until the new card is in cache
+      // so it doesn't disappear before the card pops in.
+      await qc.invalidateQueries({ queryKey: ["canvas"] });
       setStatus({ kind: "idle" });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Upload failed.";

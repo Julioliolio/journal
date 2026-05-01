@@ -32,11 +32,14 @@ export function NoteForm({
         haptic.trigger("medium");
         startTransition(async () => {
           await createNoteAction(fd);
-          // Flash the saved ✓ before refetching, so the form closes first
-          // and the just-saved card slides in afterwards instead of both
-          // being visible together during the flash hold.
-          await flash();
-          qc.invalidateQueries({ queryKey: ["canvas"] });
+          // Run the flash hold and the refetch in parallel, then close.
+          // Awaiting invalidateQueries ensures the just-saved card is in
+          // the cache (and rendered in the day stack) by the time the
+          // form unmounts — no empty gap between form-close and card-in.
+          await Promise.all([
+            flash(),
+            qc.invalidateQueries({ queryKey: ["canvas"] }),
+          ]);
           onDone();
         });
       }}
