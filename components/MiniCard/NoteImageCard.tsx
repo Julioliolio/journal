@@ -83,12 +83,26 @@ export function NoteImageCard({
     );
   }
 
+  const reactionsEl = (
+    <Reactions
+      cardId={card.id}
+      reactions={reactions}
+      canAdd={!isOwn || !editable}
+      canRemove={isOwn}
+    />
+  );
+
   return (
     <div className="card-shell card-image" data-fresh={isFresh || undefined}>
-      {card.imageUrl && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={card.imageUrl} alt="" loading="lazy" />
-      )}
+      <div className="card-image-figure">
+        {card.imageUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={card.imageUrl} alt="" loading="lazy" />
+        )}
+        {!card.text && (
+          <div className="card-image-reactions-wrap">{reactionsEl}</div>
+        )}
+      </div>
       {card.text && (
         <div className="image-note">
           <div className="markdown">
@@ -96,16 +110,9 @@ export function NoteImageCard({
               {card.text}
             </ReactMarkdown>
           </div>
+          {reactionsEl}
         </div>
       )}
-      <div className="card-image-reactions-wrap">
-        <Reactions
-          cardId={card.id}
-          reactions={reactions}
-          canAdd={!isOwn || !editable}
-          canRemove={isOwn}
-        />
-      </div>
       {isOwn && editable && (
         <EditMenu card={card} onEdit={() => setEditing(true)} inset />
       )}
