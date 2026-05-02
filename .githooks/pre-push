@@ -11,4 +11,7 @@ pnpm install --frozen-lockfile --prefer-offline >/dev/null
 echo "→ typecheck…"
 pnpm typecheck
 
+echo "→ lint…"
+pnpm lint
+
 echo "✓ preflight passed"
