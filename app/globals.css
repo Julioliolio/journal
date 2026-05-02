@@ -290,9 +290,11 @@ textarea {
   flex-shrink: 0;
 }
 
-.name-pill-toggle:hover {
-  background: var(--color-line);
-  transform: scale(1.03);
+@media (hover: hover) {
+  .name-pill-toggle:hover {
+    background: var(--color-line);
+    transform: scale(1.03);
+  }
 }
 
 .name-pill-toggle:active {
