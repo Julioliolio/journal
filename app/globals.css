@@ -282,6 +282,11 @@ textarea {
   transform-origin: 50% 50%;
 }
 
+.name-pill-toggle .swap-icon {
+  opacity: 0.4;
+  flex-shrink: 0;
+}
+
 .name-pill-toggle:hover {
   background: var(--color-line);
   transform: scale(1.03);
