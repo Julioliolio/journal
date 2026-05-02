@@ -35,15 +35,15 @@ export function Composer({
           >
             + image
           </button>
-          <button
-            type="button"
-            className="pill pill-bouncy"
-            onClick={() => setType("reflection")}
-            disabled={reflectionExists}
-            title={reflectionExists ? "already added today" : undefined}
-          >
-            + reflection
-          </button>
+          {!reflectionExists && (
+            <button
+              type="button"
+              className="pill pill-bouncy"
+              onClick={() => setType("reflection")}
+            >
+              + reflection
+            </button>
+          )}
         </div>
       </div>
     );
