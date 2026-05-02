@@ -78,9 +78,6 @@ export async function searchGiphy(
   const response = await fetch(endpoint, { next: { revalidate: 60 } });
   if (!response.ok) throw translateError(response.status);
   const json = (await response.json()) as RawGiphyResponse;
-  if (json.meta?.status && json.meta.status !== 200) {
-    throw translateError(json.meta.status);
-  }
 
   return (json.data ?? []).flatMap((item) => {
     // Stickers and gifs share the same envelope, but individual entries
