@@ -4,7 +4,6 @@ type Ctrl = ReadableStreamDefaultController<Uint8Array>;
 // can re-evaluate modules in dev mode, which would otherwise give server
 // actions and the SSE route handler separate empty Sets).
 declare global {
-  // eslint-disable-next-line no-var
   var __sseClients: Set<Ctrl> | undefined;
 }
 const clients: Set<Ctrl> = (globalThis.__sseClients ??= new Set());
