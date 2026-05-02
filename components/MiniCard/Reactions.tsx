@@ -10,6 +10,7 @@ import {
   removeReactionAction,
   type AddReactionInput,
 } from "@/app/actions/reactions";
+import { trackMyReaction, getMyReactionExpiry } from "@/lib/myReactions";
 import type { CanvasData } from "@/app/actions/data";
 import { GiphyPicker } from "@/components/Composer/GiphyPicker";
 import { useEscapeKey } from "@/lib/hooks/useEscapeKey";
@@ -24,12 +25,10 @@ export function Reactions({
   cardId,
   reactions,
   canAdd,
-  canRemove,
 }: {
   cardId: string;
   reactions: Reaction[];
   canAdd: boolean;
-  canRemove: boolean;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [revealed, setRevealed] = useState(false);
@@ -149,6 +148,7 @@ export function Reactions({
     startTransition(async () => {
       try {
         const real = await addReactionAction(input);
+        trackMyReaction(real.id);
         replaceReaction(qc, tempId, real);
       } catch (err) {
         removeReactionFromCache(qc, tempId);
@@ -185,7 +185,6 @@ export function Reactions({
         <ReactionChip
           key={r.id}
           reaction={r}
-          canRemove={canRemove}
           pending={pending}
           onRemove={remove}
         />
@@ -235,18 +234,36 @@ export function Reactions({
   );
 }
 
+function useIsMyReaction(id: string): boolean {
+  const [active, setActive] = useState(() => {
+    const exp = getMyReactionExpiry(id);
+    return !!exp && Date.now() < exp;
+  });
+
+  useEffect(() => {
+    if (!active) return;
+    const exp = getMyReactionExpiry(id);
+    if (!exp) return;
+    const delay = exp - Date.now();
+    if (delay <= 0) { setActive(false); return; }
+    const t = setTimeout(() => setActive(false), delay);
+    return () => clearTimeout(t);
+  }, [id, active]);
+
+  return active;
+}
+
 function ReactionChip({
   reaction: r,
-  canRemove,
   pending,
   onRemove,
 }: {
   reaction: Reaction;
-  canRemove: boolean;
   pending: boolean;
   onRemove: (id: string) => void;
 }) {
   const isOptimistic = r.id.startsWith("temp-");
+  const isMyRecent = useIsMyReaction(r.id);
   const [enlarged, setEnlarged] = useState(false);
 
   function open() {
@@ -286,7 +303,7 @@ function ReactionChip({
             height={r.height ?? undefined}
           />
         )}
-        {canRemove && !isOptimistic && (
+        {isMyRecent && !isOptimistic && (
           <button
             type="button"
             className="reaction-remove"

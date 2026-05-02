@@ -88,7 +88,6 @@ export function NoteImageCard({
       cardId={card.id}
       reactions={reactions}
       canAdd={!isOwn || !editable}
-      canRemove={isOwn}
     />
   );
 

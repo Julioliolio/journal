@@ -166,7 +166,6 @@ export function ReflectionCard({
         cardId={card.id}
         reactions={reactions}
         canAdd={!isOwn || !editable}
-        canRemove={isOwn}
       />
       {isOwn && editable && (
         <EditMenu card={card} onEdit={() => setEditing(true)} />
