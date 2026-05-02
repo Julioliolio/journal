@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 
 import { getCanvasDataAction, type CanvasData } from "@/app/actions/data";
@@ -21,6 +21,16 @@ export function Canvas({
   /** Full /login/<token> URL — only passed for authenticated authors. */
   inviteUrl?: string | null;
 }) {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const es = new EventSource("/api/events");
+    es.onmessage = () => {
+      queryClient.invalidateQueries({ queryKey: ["canvas"] });
+    };
+    return () => es.close();
+  }, [queryClient]);
+
   const { data } = useQuery({
     queryKey: ["canvas"],
     queryFn: getCanvasDataAction,

@@ -7,6 +7,7 @@ import { db } from "@/lib/db/client";
 import { cards, type Card, type CardType } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/cookies";
 import { newId } from "@/lib/ids";
+import { notifyClients } from "@/lib/notify";
 import { isISODate, isWithinUtcDayBound } from "@/lib/date";
 import { deleteImageBlob } from "@/lib/blob";
 
@@ -102,6 +103,7 @@ async function insertCardOnToday(
     position,
     ...values,
   });
+  notifyClients();
   revalidatePath("/");
 }
 
@@ -218,6 +220,7 @@ export async function updateCardAction(formData: FormData): Promise<void> {
   }
 
   await db.update(cards).set(patch).where(eq(cards.id, id));
+  notifyClients();
 
   // If the felt image was replaced or removed during a reflection edit,
   // drop the previous blob so we don't accumulate orphans.
@@ -240,6 +243,7 @@ export async function deleteCardAction(formData: FormData): Promise<void> {
   const card = await loadOwnedCard(id, personKey, clientToday);
   await db.delete(cards).where(eq(cards.id, id));
   await deleteBlobs([card.imageUrl, card.reflectionFeltImageUrl]);
+  notifyClients();
   revalidatePath("/");
 }
 
@@ -281,5 +285,6 @@ export async function reorderCardsAction(input: {
         .where(eq(cards.id, input.orderedIds[i]!));
     }
   });
+  notifyClients();
   revalidatePath("/");
 }

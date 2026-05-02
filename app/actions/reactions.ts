@@ -9,6 +9,7 @@ import { reactions, type Reaction } from "@/lib/db/schema";
 import { isGiphyEmbedUrl } from "@/lib/giphy";
 import { getCurrentUser } from "@/lib/cookies";
 import { newId } from "@/lib/ids";
+import { notifyClients } from "@/lib/notify";
 
 const MAX_REACTIONS_PER_CARD = 200;
 const URL_MAX = 1000;
@@ -86,6 +87,7 @@ export async function addReactionAction(
   }
 
   await db.insert(reactions).values(row);
+  notifyClients();
   revalidatePath("/");
   return row;
 }
@@ -96,5 +98,6 @@ export async function removeReactionAction(reactionId: string): Promise<void> {
   const id = String(reactionId ?? "").trim();
   if (!id) throw new Error("Missing reaction id.");
   await db.delete(reactions).where(eq(reactions.id, id));
+  notifyClients();
   revalidatePath("/");
 }
