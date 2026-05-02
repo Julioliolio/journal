@@ -244,9 +244,7 @@ function useIsMyReaction(id: string): boolean {
     if (!active) return;
     const exp = getMyReactionExpiry(id);
     if (!exp) return;
-    const delay = exp - Date.now();
-    if (delay <= 0) { setActive(false); return; }
-    const t = setTimeout(() => setActive(false), delay);
+    const t = setTimeout(() => setActive(false), Math.max(0, exp - Date.now()));
     return () => clearTimeout(t);
   }, [id, active]);
 
