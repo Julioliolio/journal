@@ -75,6 +75,7 @@ textarea {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100svh; /* svh excludes collapsible browser chrome on iOS */
   /* Reserve room for the floating toolbar (theme + switch) so the
      mobile tabs / sticky half-header never sit underneath it. */
   padding-top: 52px;
@@ -98,7 +99,7 @@ textarea {
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
-  scroll-behavior: smooth;
+  overscroll-behavior: contain;
   scrollbar-width: thin;
   scrollbar-color: var(--color-line) transparent;
 }
