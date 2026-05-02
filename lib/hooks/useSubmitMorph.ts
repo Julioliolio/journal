@@ -15,6 +15,7 @@ export function useSubmitMorph(holdMs = 320) {
   const flash = useCallback(async () => {
     setSaved(true);
     await new Promise((resolve) => setTimeout(resolve, holdMs));
+    setSaved(false);
   }, [holdMs]);
   return { saved, flash };
 }
