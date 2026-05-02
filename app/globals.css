@@ -34,6 +34,7 @@ body {
   font-size: 15px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
 }
 
 button,
@@ -48,6 +49,7 @@ button {
   border: 0;
   padding: 0;
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 input,
