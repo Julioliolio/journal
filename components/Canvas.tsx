@@ -25,8 +25,13 @@ export function Canvas({
 
   useEffect(() => {
     const es = new EventSource("/api/events");
-    es.onmessage = () => {
-      queryClient.invalidateQueries({ queryKey: ["canvas"] });
+    const refetch = () => queryClient.invalidateQueries({ queryKey: ["canvas"] });
+    es.onmessage = refetch;
+    // Resync on reconnect so missed notifications don't leave a stale canvas.
+    let connected = false;
+    es.onopen = () => {
+      if (connected) refetch();
+      connected = true;
     };
     return () => es.close();
   }, [queryClient]);
