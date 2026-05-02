@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import {
@@ -24,19 +24,29 @@ export function EditMenu({
   const [pending, startTransition] = useTransition();
   const [confirming, setConfirming] = useState(false);
   const qc = useQueryClient();
+  const slotRef = useRef<HTMLDivElement>(null);
+
+  const ANIM_MS = 280;
 
   function remove() {
+    const shell = slotRef.current?.closest(".card-shell");
+    if (shell) shell.setAttribute("data-deleting", "");
+
     const fd = new FormData();
     fd.set("id", card.id);
     fd.set("clientToday", todayISO());
     startTransition(async () => {
-      await deleteCardAction(fd);
+      await Promise.all([
+        deleteCardAction(fd),
+        new Promise((r) => setTimeout(r, ANIM_MS)),
+      ]);
       qc.invalidateQueries({ queryKey: ["canvas"] });
     });
   }
 
   return (
     <div
+      ref={slotRef}
       className={`edit-slot${inset ? " edit-slot-inset" : ""}`}
       data-open={confirming || undefined}
     >
