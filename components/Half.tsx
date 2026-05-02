@@ -15,6 +15,7 @@ export function Half({
   reactionsByCardId,
   today,
   isOwn,
+  onToggle,
 }: {
   personKey: PersonKey;
   label: string;
@@ -22,6 +23,7 @@ export function Half({
   reactionsByCardId: Map<string, Reaction[]>;
   today: string;
   isOwn: boolean;
+  onToggle?: () => void;
 }) {
   const grouped = groupByDate(cards);
 
@@ -141,10 +143,22 @@ export function Half({
     <>
       <header className="half-header">
         <div className="half-header-inner">
-          <span className="name-pill">
-            {label}
-            {isOwn && <span className="you">you</span>}
-          </span>
+          {onToggle ? (
+            <button
+              type="button"
+              className="name-pill name-pill-toggle"
+              onClick={onToggle}
+              aria-label={`switch to other person`}
+            >
+              {label}
+              {isOwn && <span className="you">you</span>}
+            </button>
+          ) : (
+            <span className="name-pill">
+              {label}
+              {isOwn && <span className="you">you</span>}
+            </span>
+          )}
           {canPick ? (
             <div className="date-picker-wrap" ref={pickerRef}>
               <button

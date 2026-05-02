@@ -81,7 +81,7 @@ export function Canvas({
   const name2Cards = cards.filter((c) => c.personKey === "name2");
   const partnerJoined = Boolean(partners.name2);
 
-  const renderName2Side = () =>
+  const renderName2Side = (onToggle?: () => void) =>
     partnerJoined ? (
       <Half
         personKey="name2"
@@ -90,6 +90,7 @@ export function Canvas({
         reactionsByCardId={reactionsByCardId}
         today={today}
         isOwn={currentUser === "name2"}
+        onToggle={onToggle}
       />
     ) : (
       <WaitingForPartner inviteUrl={inviteUrl} />
@@ -102,43 +103,20 @@ export function Canvas({
       </div>
 
       {isMobile ? (
-        <>
-          <div className="mobile-tabs" role="tablist">
-            <button
-              type="button"
-              role="tab"
-              className="mobile-tab"
-              aria-selected={tab === "name1"}
-              onClick={() => setTab("name1")}
-            >
-              {partners.name1}
-            </button>
-            <button
-              type="button"
-              role="tab"
-              className="mobile-tab"
-              aria-selected={tab === "name2"}
-              onClick={() => setTab("name2")}
-              disabled={!partnerJoined}
-              title={partnerJoined ? undefined : "waiting for partner"}
-            >
-              {partners.name2 ?? "—"}
-            </button>
+        <div className="canvas-mobile">
+          <div className="canvas-mobile-track" data-tab={tab}>
+            <Half
+              personKey="name1"
+              label={partners.name1}
+              cards={name1Cards}
+              reactionsByCardId={reactionsByCardId}
+              today={today}
+              isOwn={currentUser === "name1"}
+              onToggle={partnerJoined ? () => setTab("name2") : undefined}
+            />
+            {renderName2Side(() => setTab("name1"))}
           </div>
-          <div className="canvas-mobile">
-            <div className="canvas-mobile-track" data-tab={tab}>
-              <Half
-                personKey="name1"
-                label={partners.name1}
-                cards={name1Cards}
-                reactionsByCardId={reactionsByCardId}
-                today={today}
-                isOwn={currentUser === "name1"}
-              />
-              {renderName2Side()}
-            </div>
-          </div>
-        </>
+        </div>
       ) : (
         <div className="canvas-desktop">
           <Half
