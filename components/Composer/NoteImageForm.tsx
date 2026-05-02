@@ -63,12 +63,14 @@ export function NoteImageForm({
       }
       setStatus("saving");
       const note = text.trim();
+      let result;
       if (note) {
         createFd.set("text", note);
-        await createNoteImageAction(createFd);
+        result = await createNoteImageAction(createFd);
       } else {
-        await createImageAction(createFd);
+        result = await createImageAction(createFd);
       }
+      if (result?.error) throw new Error(result.error);
       // Run the flash hold and the refetch in parallel, then close.
       // Awaiting invalidateQueries ensures the just-saved card is in
       // the cache (and rendered in the day stack) by the time the form

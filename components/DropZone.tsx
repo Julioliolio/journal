@@ -34,7 +34,8 @@ export function DropZone({
       createFd.set("date", today);
       createFd.set("clientToday", today);
       createFd.set("imageFile", processed);
-      await createImageAction(createFd);
+      const result = await createImageAction(createFd);
+      if (result?.error) throw new Error(result.error);
       // Hold the "uploading…" indicator until the new card is in cache
       // so it doesn't disappear before the card pops in.
       await qc.invalidateQueries({ queryKey: ["canvas"] });

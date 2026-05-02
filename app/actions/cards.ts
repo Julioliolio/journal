@@ -125,26 +125,36 @@ export async function createNoteAction(formData: FormData): Promise<void> {
   });
 }
 
-export async function createImageAction(formData: FormData): Promise<void> {
-  const url = await resolveImageUrl(formData);
-  const caption = clip(formData.get("imageCaption"), CAPTION_MAX);
-  await insertCardOnToday(formData, "image", {
-    imageUrl: url,
-    imageCaption: caption,
-  });
+export async function createImageAction(
+  formData: FormData,
+): Promise<{ error: string } | void> {
+  try {
+    const url = await resolveImageUrl(formData);
+    const caption = clip(formData.get("imageCaption"), CAPTION_MAX);
+    await insertCardOnToday(formData, "image", {
+      imageUrl: url,
+      imageCaption: caption,
+    });
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Upload failed." };
+  }
 }
 
 export async function createNoteImageAction(
   formData: FormData,
-): Promise<void> {
-  const url = await resolveImageUrl(formData);
-  const text = requireClip(formData.get("text"), TEXT_MAX, "Note");
-  const caption = clip(formData.get("imageCaption"), CAPTION_MAX);
-  await insertCardOnToday(formData, "note_image", {
-    text,
-    imageUrl: url,
-    imageCaption: caption,
-  });
+): Promise<{ error: string } | void> {
+  try {
+    const url = await resolveImageUrl(formData);
+    const text = requireClip(formData.get("text"), TEXT_MAX, "Note");
+    const caption = clip(formData.get("imageCaption"), CAPTION_MAX);
+    await insertCardOnToday(formData, "note_image", {
+      text,
+      imageUrl: url,
+      imageCaption: caption,
+    });
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Upload failed." };
+  }
 }
 
 export async function createReflectionAction(
