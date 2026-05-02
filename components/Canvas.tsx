@@ -56,9 +56,11 @@ export function Canvas({
 
   const isMobile = useIsMobile();
   const [tab, setTab] = useState<PersonKey>(currentUser ?? "name1");
-  useEffect(() => {
+  const [trackedUser, setTrackedUser] = useState(currentUser);
+  if (currentUser !== trackedUser) {
+    setTrackedUser(currentUser);
     if (currentUser) setTab(currentUser);
-  }, [currentUser]);
+  }
 
   const name1Cards = cards.filter((c) => c.personKey === "name1");
   const name2Cards = cards.filter((c) => c.personKey === "name2");

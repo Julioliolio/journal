@@ -17,7 +17,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useWebHaptics } from "web-haptics/react";
 
@@ -28,6 +28,8 @@ import type { Card, Reaction } from "@/lib/db/schema";
 import { Composer } from "./Composer";
 import { MiniCard } from "./MiniCard";
 import { MiniCardWithLock } from "./MiniCard/WithLock";
+
+const subscribeNoop = () => () => {};
 
 export function DayCard({
   date,
@@ -88,8 +90,11 @@ function DayBody({
   const isToday = date === today;
   const qc = useQueryClient();
   const haptic = useWebHaptics();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useSyncExternalStore(
+    subscribeNoop,
+    () => true,
+    () => false,
+  );
   const [orderedIds, setOrderedIds] = useState<string[]>(() =>
     cards.map((c) => c.id),
   );

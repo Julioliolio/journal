@@ -50,14 +50,22 @@ export function GiphyPicker({
 
   const isEmoji = tab === "emoji";
 
-  useEffect(() => {
+  // Reset the giphy/sticker state synchronously when entering emoji mode
+  // so we don't briefly flash stale items the next time the user comes
+  // back to a media tab.
+  const [trackedIsEmoji, setTrackedIsEmoji] = useState(isEmoji);
+  if (trackedIsEmoji !== isEmoji) {
+    setTrackedIsEmoji(isEmoji);
     if (isEmoji) {
       setLoading(false);
       setError(null);
       setItems([]);
       setHasMore(false);
-      return;
     }
+  }
+
+  useEffect(() => {
+    if (isEmoji) return;
     const id = ++requestRef.current;
     const handle = setTimeout(async () => {
       if (requestRef.current !== id) return;

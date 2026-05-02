@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import type { Card, Reaction } from "@/lib/db/schema";
 
 import { MiniCard } from "./index";
@@ -25,7 +27,10 @@ export function MiniCardWithLock({
   today: string;
 }) {
   const editable = card.date === today;
-  const isFresh = Date.now() - card.createdAt.getTime() < FRESH_WINDOW_MS;
+  // Snapshot freshness once at mount — purely visual, never updated after.
+  const [isFresh] = useState(
+    () => Date.now() - card.createdAt.getTime() < FRESH_WINDOW_MS,
+  );
 
   if (sortable && isOwn && editable) {
     return (

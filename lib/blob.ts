@@ -26,7 +26,7 @@ const LOCAL_PREFIX = "/uploads/";
  * Local dev without a token: writes to public/uploads/ and returns a
  * relative path. The dev server serves files from public/ as-is.
  */
-function useLocalStorage(): boolean {
+function isLocalStorage(): boolean {
   return !process.env.BLOB_READ_WRITE_TOKEN;
 }
 
@@ -56,7 +56,7 @@ export async function uploadImageBlob(file: File): Promise<string> {
   const id = crypto.randomUUID();
   const filename = `${id}.${extFor(file)}`;
 
-  if (useLocalStorage()) {
+  if (isLocalStorage()) {
     const dir = join(process.cwd(), "public", "uploads");
     await mkdir(dir, { recursive: true });
     const buffer = Buffer.from(await file.arrayBuffer());

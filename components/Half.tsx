@@ -47,6 +47,7 @@ export function Half({
   // the "current" date shown in the header. Also flag the half as
   // "scrolled" once the user moves past the top so the header fade only
   // applies when there's actual content scrolling under it.
+  const datesKey = dates.join(",");
   useEffect(() => {
     const root = halfRef.current;
     if (!root) return;
@@ -93,7 +94,7 @@ export function Half({
       root.removeEventListener("scroll", updateScrolled);
       observer.disconnect();
     };
-  }, [dates.join(",")]);
+  }, [datesKey]);
 
   // Close the picker on outside click or Escape.
   useEffect(() => {
