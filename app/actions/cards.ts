@@ -9,7 +9,7 @@ import { getCurrentUser } from "@/lib/cookies";
 import { newId } from "@/lib/ids";
 import { notifyClients } from "@/lib/notify";
 import { isISODate, isWithinUtcDayBound } from "@/lib/date";
-import { deleteImageBlob } from "@/lib/blob";
+import { deleteImageBlob, uploadImageBlob } from "@/lib/blob";
 
 /**
  * Best-effort cleanup of orphaned blobs after a card is deleted or its
@@ -23,6 +23,18 @@ async function deleteBlobs(urls: ReadonlyArray<string | null | undefined>) {
       .filter((u): u is string => Boolean(u))
       .map((u) => deleteImageBlob(u)),
   );
+}
+
+async function resolveImageUrl(formData: FormData): Promise<string> {
+  const file = formData.get("imageFile");
+  if (file instanceof File) return uploadImageBlob(file);
+  return requireClip(formData.get("imageUrl"), SHORT_MAX, "Image URL");
+}
+
+async function resolveFeltImageUrl(formData: FormData): Promise<string | null> {
+  const file = formData.get("feltImageFile");
+  if (file instanceof File) return uploadImageBlob(file);
+  return clip(formData.get("feltImageUrl"), URL_MAX);
 }
 
 const TEXT_MAX = 5000;
@@ -114,7 +126,7 @@ export async function createNoteAction(formData: FormData): Promise<void> {
 }
 
 export async function createImageAction(formData: FormData): Promise<void> {
-  const url = requireClip(formData.get("imageUrl"), SHORT_MAX, "Image URL");
+  const url = await resolveImageUrl(formData);
   const caption = clip(formData.get("imageCaption"), CAPTION_MAX);
   await insertCardOnToday(formData, "image", {
     imageUrl: url,
@@ -125,7 +137,7 @@ export async function createImageAction(formData: FormData): Promise<void> {
 export async function createNoteImageAction(
   formData: FormData,
 ): Promise<void> {
-  const url = requireClip(formData.get("imageUrl"), SHORT_MAX, "Image URL");
+  const url = await resolveImageUrl(formData);
   const text = requireClip(formData.get("text"), TEXT_MAX, "Note");
   const caption = clip(formData.get("imageCaption"), CAPTION_MAX);
   await insertCardOnToday(formData, "note_image", {
@@ -141,7 +153,7 @@ export async function createReflectionAction(
   const did = clip(formData.get("did"), TEXT_MAX);
   const learned = clip(formData.get("learned"), TEXT_MAX);
   const felt = clip(formData.get("felt"), TEXT_MAX);
-  const feltImageUrl = clip(formData.get("feltImageUrl"), URL_MAX);
+  const feltImageUrl = await resolveFeltImageUrl(formData);
   if (!did && !learned && !felt && !feltImageUrl) {
     throw new Error("At least one reflection field is required.");
   }
@@ -200,14 +212,11 @@ export async function updateCardAction(formData: FormData): Promise<void> {
       patch.text = clip(formData.get("text"), TEXT_MAX);
       patch.imageCaption = clip(formData.get("imageCaption"), CAPTION_MAX);
       break;
-    case "reflection":
+    case "reflection": {
       patch.reflectionDid = clip(formData.get("did"), TEXT_MAX);
       patch.reflectionLearned = clip(formData.get("learned"), TEXT_MAX);
       patch.reflectionFelt = clip(formData.get("felt"), TEXT_MAX);
-      patch.reflectionFeltImageUrl = clip(
-        formData.get("feltImageUrl"),
-        URL_MAX,
-      );
+      patch.reflectionFeltImageUrl = await resolveFeltImageUrl(formData);
       if (
         !patch.reflectionDid &&
         !patch.reflectionLearned &&
@@ -217,6 +226,7 @@ export async function updateCardAction(formData: FormData): Promise<void> {
         throw new Error("At least one reflection field is required.");
       }
       break;
+    }
   }
 
   await db.update(cards).set(patch).where(eq(cards.id, id));

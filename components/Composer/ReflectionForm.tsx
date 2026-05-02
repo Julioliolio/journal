@@ -20,6 +20,7 @@ export function ReflectionForm({
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [feltImageUrl, setFeltImageUrl] = useState<string | null>(null);
+  const [feltFile, setFeltFile] = useState<File | null>(null);
   const { saved, flash } = useSubmitMorph();
   const qc = useQueryClient();
   const haptic = useWebHaptics();
@@ -31,7 +32,8 @@ export function ReflectionForm({
       action={(fd) => {
         fd.set("date", today);
         fd.set("clientToday", today);
-        if (feltImageUrl) fd.set("feltImageUrl", feltImageUrl);
+        if (feltFile) fd.set("feltImageFile", feltFile);
+        else if (feltImageUrl) fd.set("feltImageUrl", feltImageUrl);
         // Fire synchronously inside the gesture handler — Firefox Android
         // and iOS Safari both drop the haptic if it lands after an await.
         haptic.trigger("medium");
@@ -65,7 +67,7 @@ export function ReflectionForm({
       <Field name="felt" label="felt">
         <FeltImagePicker
           url={feltImageUrl}
-          onChange={setFeltImageUrl}
+          onChange={(url, file) => { setFeltImageUrl(url); setFeltFile(file ?? null); }}
           disabled={busy}
         />
       </Field>

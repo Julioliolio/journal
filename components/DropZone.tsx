@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { createImageAction } from "@/app/actions/cards";
-import { uploadImageAction } from "@/app/actions/upload";
 import { processImage } from "@/lib/image";
 
 type Status =
@@ -31,13 +30,10 @@ export function DropZone({
       setStatus({ kind: "processing" });
       const processed = await processImage(file);
       setStatus({ kind: "uploading" });
-      const uploadFd = new FormData();
-      uploadFd.set("file", processed);
-      const url = await uploadImageAction(uploadFd);
       const createFd = new FormData();
       createFd.set("date", today);
       createFd.set("clientToday", today);
-      createFd.set("imageUrl", url);
+      createFd.set("imageFile", processed);
       await createImageAction(createFd);
       // Hold the "uploading…" indicator until the new card is in cache
       // so it doesn't disappear before the card pops in.

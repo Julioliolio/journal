@@ -8,7 +8,6 @@ import {
   createImageAction,
   createNoteImageAction,
 } from "@/app/actions/cards";
-import { uploadImageAction } from "@/app/actions/upload";
 import { processImage, IMAGE_ACCEPT_ATTR } from "@/lib/image";
 import { AutoGrowTextarea } from "@/components/AutoGrowTextarea";
 import { useSubmitMorph } from "@/lib/hooks/useSubmitMorph";
@@ -16,12 +15,12 @@ import type { PickerSelection } from "@/lib/giphy-types";
 
 import { GiphyPicker } from "./GiphyPicker";
 
-type Status = "idle" | "processing" | "uploading";
+type Status = "idle" | "processing" | "saving";
 
 const STATUS_LABEL: Record<Status, string> = {
   idle: "save",
   processing: "compressing",
-  uploading: "uploading",
+  saving: "saving",
 };
 
 export function NoteImageForm({
@@ -52,22 +51,17 @@ export function NoteImageForm({
     // iOS Safari both drop the haptic if it lands after an await.
     haptic.trigger("medium");
     try {
-      let url: string;
-      if (giphyUrl) {
-        url = giphyUrl;
-      } else {
-        setStatus("processing");
-        const processed = await processImage(file!);
-        setStatus("uploading");
-        const uploadFd = new FormData();
-        uploadFd.set("file", processed);
-        url = await uploadImageAction(uploadFd);
-      }
-
       const createFd = new FormData();
       createFd.set("date", today);
       createFd.set("clientToday", today);
-      createFd.set("imageUrl", url);
+      if (giphyUrl) {
+        createFd.set("imageUrl", giphyUrl);
+      } else {
+        setStatus("processing");
+        const processed = await processImage(file!);
+        createFd.set("imageFile", processed);
+      }
+      setStatus("saving");
       const note = text.trim();
       if (note) {
         createFd.set("text", note);
@@ -85,7 +79,7 @@ export function NoteImageForm({
       ]);
       onDone();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed.");
+      setError(err instanceof Error ? err.message : "Save failed.");
       setStatus("idle");
     }
   }

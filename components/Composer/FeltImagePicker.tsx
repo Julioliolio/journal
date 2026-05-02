@@ -2,8 +2,7 @@
 
 import { useRef, useState } from "react";
 
-import { useImageUpload } from "@/lib/hooks/useImageUpload";
-import { isVideoUrl, MEDIA_ACCEPT_ATTR } from "@/lib/image";
+import { processMedia, isVideoUrl, MEDIA_ACCEPT_ATTR } from "@/lib/image";
 import type { PickerSelection } from "@/lib/giphy-types";
 
 import { GiphyPicker } from "./GiphyPicker";
@@ -13,35 +12,57 @@ export function FeltImagePicker({
   onChange,
   disabled,
 }: {
-  /** Currently-selected media URL, or null. Controlled by the parent. */
+  /** Currently-selected media URL (object URL for local files, embed URL for Giphy), or null. */
   url: string | null;
-  onChange: (url: string | null) => void;
+  /** Called with the preview URL and the raw File (null for Giphy/clear). */
+  onChange: (url: string | null, file?: File | null) => void;
   disabled?: boolean;
 }) {
-  const { uploadFile, status, error, busy } = useImageUpload();
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [compressing, setCompressing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  // Track the object URL we created so we can revoke it on replacement/unmount.
+  const objectUrlRef = useRef<string | null>(null);
 
   async function handlePick(file: File) {
-    const next = await uploadFile(file);
-    if (next) onChange(next);
+    setError(null);
+    setCompressing(true);
+    try {
+      const processed = await processMedia(file);
+      if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+      const preview = URL.createObjectURL(processed);
+      objectUrlRef.current = preview;
+      onChange(preview, processed);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Processing failed.");
+    } finally {
+      setCompressing(false);
+    }
   }
 
   function clear() {
-    onChange(null);
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
+    onChange(null, null);
     if (inputRef.current) inputRef.current.value = "";
   }
 
   function pickFromGiphy(picked: PickerSelection) {
     if (picked.kind !== "gif") return;
-    onChange(picked.embedUrl);
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
+    onChange(picked.embedUrl, null);
     setPickerOpen(false);
   }
 
+  const busy = compressing;
   const label = busy
-    ? status === "processing"
-      ? "compressing…"
-      : "uploading…"
+    ? "compressing…"
     : url
       ? "replace"
       : "add media";

@@ -4,9 +4,8 @@ import { useRef, useState } from "react";
 
 import { AutoGrowTextarea } from "@/components/AutoGrowTextarea";
 import { FeltImagePicker } from "@/components/Composer/FeltImagePicker";
-import { useImageUpload } from "@/lib/hooks/useImageUpload";
 import { useSubmitMorph } from "@/lib/hooks/useSubmitMorph";
-import { isVideoUrl } from "@/lib/image";
+import { isVideoUrl, processMedia } from "@/lib/image";
 import type { Card, Reaction } from "@/lib/db/schema";
 
 import { EditMenu, useUpdateCard } from "./EditMenu";
@@ -29,15 +28,27 @@ export function ReflectionCard({
   const [feltImageUrl, setFeltImageUrl] = useState<string | null>(
     card.reflectionFeltImageUrl,
   );
+  const [feltFile, setFeltFile] = useState<File | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [dropping, setDropping] = useState(false);
   const dragDepth = useRef(0);
-  const drop = useImageUpload();
+  // Object URL created during drag-drop; revoke when replaced or on unmount.
+  const dropObjectUrlRef = useRef<string | null>(null);
   const update = useUpdateCard();
   const { saved, flash } = useSubmitMorph();
 
   async function ingestDrop(file: File) {
-    const url = await drop.uploadFile(file);
-    if (url) setFeltImageUrl(url);
+    setDropping(true);
+    try {
+      const processed = await processMedia(file);
+      if (dropObjectUrlRef.current) URL.revokeObjectURL(dropObjectUrlRef.current);
+      const preview = URL.createObjectURL(processed);
+      dropObjectUrlRef.current = preview;
+      setFeltImageUrl(preview);
+      setFeltFile(processed);
+    } finally {
+      setDropping(false);
+    }
   }
 
   function resetDragState() {
@@ -79,7 +90,8 @@ export function ReflectionCard({
           className="edit-inline"
           action={async (fd) => {
             fd.set("id", card.id);
-            if (feltImageUrl) fd.set("feltImageUrl", feltImageUrl);
+            if (feltFile) fd.set("feltImageFile", feltFile);
+            else if (feltImageUrl) fd.set("feltImageUrl", feltImageUrl);
             await update(fd);
             await flash();
             setEditing(false);
@@ -108,12 +120,16 @@ export function ReflectionCard({
           >
             <FeltImagePicker
               url={feltImageUrl}
-              onChange={setFeltImageUrl}
-              disabled={saved || drop.busy}
+              onChange={(url, file) => {
+                if (dropObjectUrlRef.current) {
+                  URL.revokeObjectURL(dropObjectUrlRef.current);
+                  dropObjectUrlRef.current = null;
+                }
+                setFeltImageUrl(url);
+                setFeltFile(file ?? null);
+              }}
+              disabled={saved || dropping}
             />
-            {drop.error && (
-              <p className="compose-error">{drop.error}</p>
-            )}
           </Field>
           <div className="compose-footer">
             <span className="compose-spacer" />
@@ -122,6 +138,7 @@ export function ReflectionCard({
               className="pill pill-ghost"
               onClick={() => {
                 setFeltImageUrl(card.reflectionFeltImageUrl);
+                setFeltFile(null);
                 setEditing(false);
               }}
               disabled={saved}
@@ -132,7 +149,7 @@ export function ReflectionCard({
               type="submit"
               className="pill pill-primary pill-bouncy"
               data-saved={saved || undefined}
-              disabled={saved || drop.busy}
+              disabled={saved || dropping}
             >
               {saved ? "✓" : "save"}
             </button>
@@ -144,9 +161,9 @@ export function ReflectionCard({
             <span className="felt-drop-overlay-text">drop to set felt image</span>
           </div>
         )}
-        {drop.busy && (
+        {dropping && (
           <div className="felt-drop-status">
-            {drop.status === "processing" ? "compressing…" : "uploading…"}
+            compressing…
           </div>
         )}
       </div>
