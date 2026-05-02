@@ -137,14 +137,16 @@ export function NoteImageForm({
               <>choose image</>
             )}
           </label>
-          <button
-            type="button"
-            className="file-pill"
-            disabled={busy}
-            onClick={() => setPickerOpen(true)}
-          >
-            search GIPHY
-          </button>
+          {!file && (
+            <button
+              type="button"
+              className="file-pill"
+              disabled={busy}
+              onClick={() => setPickerOpen(true)}
+            >
+              search GIPHY
+            </button>
+          )}
         </div>
       )}
       <AutoGrowTextarea
