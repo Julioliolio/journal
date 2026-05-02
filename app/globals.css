@@ -1464,6 +1464,30 @@ textarea {
   }
 }
 
+/* Saving spinner: keep the button fully opaque and spin a ring before
+   the label while the action is in-flight. */
+.pill[data-pending]:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.pill[data-pending]::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  border-top-color: transparent;
+  animation: pill-spin 600ms linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes pill-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Mobile tab horizontal slide: both halves render inside a track
    that translates -50% when the second tab is active. */
 .canvas-mobile {

@@ -84,6 +84,7 @@ export function ReflectionForm({
           type="submit"
           className="pill pill-primary pill-bouncy"
           data-saved={saved || undefined}
+          data-pending={pending || undefined}
           disabled={busy}
         >
           {saved ? "✓" : pending ? "saving" : "save"}

@@ -174,6 +174,7 @@ export function NoteImageForm({
           type="submit"
           className="pill pill-primary pill-bouncy"
           data-saved={saved || undefined}
+          data-pending={status !== "idle" || undefined}
           disabled={busy || !hasMedia}
         >
           {saveLabel}
