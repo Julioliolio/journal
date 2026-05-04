@@ -5,7 +5,6 @@ import { useState } from "react";
 import type { CardType } from "@/lib/db/schema";
 
 import { NoteForm } from "./NoteForm";
-import { NoteImageForm } from "./NoteImageForm";
 import { ReflectionForm } from "./ReflectionForm";
 
 export function Composer({
@@ -28,13 +27,6 @@ export function Composer({
           >
             + note
           </button>
-          <button
-            type="button"
-            className="pill pill-bouncy"
-            onClick={() => setType("note_image")}
-          >
-            + image
-          </button>
           {!reflectionExists && (
             <button
               type="button"
@@ -53,9 +45,8 @@ export function Composer({
 
   return (
     <div style={{ marginBottom: 12 }}>
-      {type === "note" && <NoteForm today={today} onDone={close} />}
-      {type === "note_image" && (
-        <NoteImageForm today={today} onDone={close} />
+      {(type === "note" || type === "note_image" || type === "image") && (
+        <NoteForm today={today} onDone={close} />
       )}
       {type === "reflection" && (
         <ReflectionForm today={today} onDone={close} />

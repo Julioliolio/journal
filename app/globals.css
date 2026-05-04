@@ -803,12 +803,11 @@ textarea {
 }
 
 /* ---------- chrome-less compose form ---------- */
-
 .compose {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 16px 18px 14px;
+  gap: 12px;
+  padding: 16px 18px;
   background: var(--color-paper);
   border-radius: var(--radius-mini);
   animation: card-enter 220ms ease-out both;
@@ -838,11 +837,15 @@ textarea {
   gap: 8px;
 }
 
+.compose-row + .compose-textarea {
+  margin-top: 2px;
+}
+
 .compose-footer {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
 .compose-spacer {
