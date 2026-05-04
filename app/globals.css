@@ -176,13 +176,16 @@ textarea {
 }
 
 .half-header-inner {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 18px 24px 14px;
+  padding: 18px 40px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.half:only-child .half-header-inner {
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .half-header-date {
