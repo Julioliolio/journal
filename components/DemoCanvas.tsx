@@ -17,24 +17,24 @@ export function DemoCanvas() {
   const [today, setToday] = useState(() => todayISO());
   const qc = useQueryClient();
 
-  // Persist across reloads so cards saved in a previous tab still show after refresh.
+  // Persist across reloads so cards saved in a previous tab still show
+  // after refresh. Initialized in useEffect (post-mount) so rendering
+  // stays pure; the query reads sessionStartRef.current at call time, by
+  // which point it's been set.
   const sessionStartRef = useRef<number>(0);
-  if (sessionStartRef.current === 0) {
-    if (typeof window !== "undefined") {
-      const stored = window.sessionStorage.getItem(SESSION_START_KEY);
-      if (stored) {
-        sessionStartRef.current = Number(stored);
-      } else {
-        sessionStartRef.current = Date.now();
-        window.sessionStorage.setItem(
-          SESSION_START_KEY,
-          String(sessionStartRef.current),
-        );
-      }
+  useEffect(() => {
+    if (sessionStartRef.current !== 0) return;
+    const stored = window.sessionStorage.getItem(SESSION_START_KEY);
+    if (stored) {
+      sessionStartRef.current = Number(stored);
     } else {
       sessionStartRef.current = Date.now();
+      window.sessionStorage.setItem(
+        SESSION_START_KEY,
+        String(sessionStartRef.current),
+      );
     }
-  }
+  }, []);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -82,17 +82,16 @@ export function DemoCanvas() {
   });
 
   const cards = data?.cards ?? [];
-  const reactions = data?.reactions ?? [];
 
   const reactionsByCardId = useMemo(() => {
     const map = new Map<string, Reaction[]>();
-    for (const r of reactions) {
+    for (const r of data?.reactions ?? []) {
       const arr = map.get(r.cardId);
       if (arr) arr.push(r);
       else map.set(r.cardId, [r]);
     }
     return map;
-  }, [reactions]);
+  }, [data?.reactions]);
 
   const isMobile = useIsMobile();
   const [tab, setTab] = useState<PersonKey>("name1");
