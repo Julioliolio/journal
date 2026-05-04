@@ -16,7 +16,9 @@ export function Half({
   today,
   isOwn,
   onToggle,
+  hideToggleIcon = false,
   pillRef,
+  sectionRef,
 }: {
   personKey: PersonKey;
   label: string;
@@ -25,8 +27,12 @@ export function Half({
   today: string;
   isOwn: boolean;
   onToggle?: () => void;
+  /** When true, render the toggle pill without the swap icon. */
+  hideToggleIcon?: boolean;
   /** Captures the pill DOM node so the parent can FLIP-animate it. */
   pillRef?: (el: HTMLElement | null) => void;
+  /** Captures the outer <section> so the parent can FLIP-animate it. */
+  sectionRef?: (el: HTMLElement | null) => void;
 }) {
   const grouped = groupByDate(cards);
 
@@ -156,7 +162,7 @@ export function Half({
             >
               {label}
               {isOwn && <span className="you">you</span>}
-              <SwapIcon />
+              {!hideToggleIcon && <SwapIcon />}
             </button>
           ) : (
             <span ref={pillRef} className="name-pill">
@@ -231,10 +237,15 @@ export function Half({
     </>
   );
 
+  const setSection = (el: HTMLElement | null) => {
+    halfRef.current = el;
+    sectionRef?.(el);
+  };
+
   if (isOwn) {
     return (
       <section
-        ref={halfRef}
+        ref={setSection}
         className="half"
         data-person={personKey}
         aria-label={`${label} side`}
@@ -246,7 +257,7 @@ export function Half({
 
   return (
     <section
-      ref={halfRef}
+      ref={setSection}
       className="half"
       data-person={personKey}
       aria-label={`${label} side`}

@@ -97,17 +97,6 @@ textarea {
   min-height: 0;
 }
 
-.canvas-column {
-  min-width: 0;
-  height: 100%;
-  display: flex;
-}
-
-.canvas-column > .half {
-  flex: 1;
-  min-width: 0;
-}
-
 .canvas-mobile {
   flex: 1;
   min-height: 0;

@@ -340,54 +340,23 @@ function DesktopCanvas({
           }}
         >
           {openPeople.map((p) => (
-            <ColumnWithRef
+            <Half
               key={p.key}
-              setColumnRef={setColumnRef(p.key)}
-            >
-              <Half
-                personKey={p.key}
-                label={p.label}
-                cards={p.cards}
-                reactionsByCardId={reactionsByCardId}
-                today={today}
-                isOwn={currentUser === p.key}
-                onToggle={() => toggle(p.key)}
-                pillRef={setPillRef(p.key)}
-              />
-            </ColumnWithRef>
+              personKey={p.key}
+              label={p.label}
+              cards={p.cards}
+              reactionsByCardId={reactionsByCardId}
+              today={today}
+              isOwn={currentUser === p.key}
+              onToggle={() => toggle(p.key)}
+              hideToggleIcon
+              pillRef={setPillRef(p.key)}
+              sectionRef={setColumnRef(p.key)}
+            />
           ))}
         </div>
       )}
     </>
-  );
-}
-
-// Wraps Half so we can attach a column ref without modifying Half itself.
-// Half renders its own <section>; we sit between it and the grid by
-// passing the ref down via a thin wrapper that grabs the rendered child.
-function ColumnWithRef({
-  setColumnRef,
-  children,
-}: {
-  setColumnRef: (el: HTMLElement | null) => void;
-  children: React.ReactNode;
-}) {
-  const wrapperRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    const wrapper = wrapperRef.current;
-    if (!wrapper) {
-      setColumnRef(null);
-      return;
-    }
-    // Half renders <section class="half"> as its only child.
-    const section = wrapper.querySelector<HTMLElement>("section.half");
-    setColumnRef(section);
-    return () => setColumnRef(null);
-  });
-  return (
-    <div ref={wrapperRef} className="canvas-column">
-      {children}
-    </div>
   );
 }
 
