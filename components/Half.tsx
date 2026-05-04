@@ -16,6 +16,7 @@ export function Half({
   today,
   isOwn,
   onToggle,
+  pillRef,
 }: {
   personKey: PersonKey;
   label: string;
@@ -24,6 +25,8 @@ export function Half({
   today: string;
   isOwn: boolean;
   onToggle?: () => void;
+  /** Captures the pill DOM node so the parent can FLIP-animate it. */
+  pillRef?: (el: HTMLElement | null) => void;
 }) {
   const grouped = groupByDate(cards);
 
@@ -145,6 +148,7 @@ export function Half({
         <div className="half-header-inner">
           {onToggle ? (
             <button
+              ref={pillRef}
               type="button"
               className="name-pill name-pill-toggle"
               onClick={onToggle}
@@ -155,7 +159,7 @@ export function Half({
               <SwapIcon />
             </button>
           ) : (
-            <span className="name-pill">
+            <span ref={pillRef} className="name-pill">
               {label}
               {isOwn && <span className="you">you</span>}
             </span>

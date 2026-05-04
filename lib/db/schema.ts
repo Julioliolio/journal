@@ -9,12 +9,14 @@ import {
 } from "drizzle-orm/sqlite-core";
 
 // Singleton row, id always = 1. Name1 is the creator (set in /login/<token>).
-// Name2 is filled in when the partner joins via the same secret link, so
-// it is nullable until that moment.
+// Name2..name4 are filled in when each subsequent person joins via the same
+// secret link, so they are nullable until that moment.
 export const partners = sqliteTable("partners", {
   id: integer("id").primaryKey().default(1),
   name1: text("name1").notNull(),
   name2: text("name2"),
+  name3: text("name3"),
+  name4: text("name4"),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date()),
@@ -24,7 +26,9 @@ export const cards = sqliteTable(
   "cards",
   {
     id: text("id").primaryKey(),
-    personKey: text("person_key", { enum: ["name1", "name2"] }).notNull(),
+    personKey: text("person_key", {
+      enum: ["name1", "name2", "name3", "name4"],
+    }).notNull(),
     date: text("date").notNull(), // 'YYYY-MM-DD' in user's local TZ
     type: text("type", {
       enum: ["note", "image", "note_image", "reflection"],
@@ -86,5 +90,11 @@ export type NewCard = typeof cards.$inferInsert;
 export type Partners = typeof partners.$inferSelect;
 export type Reaction = typeof reactions.$inferSelect;
 export type NewReaction = typeof reactions.$inferInsert;
-export type PersonKey = "name1" | "name2";
+export type PersonKey = "name1" | "name2" | "name3" | "name4";
+export const PERSON_KEYS: readonly PersonKey[] = [
+  "name1",
+  "name2",
+  "name3",
+  "name4",
+] as const;
 export type CardType = "note" | "image" | "note_image" | "reflection";

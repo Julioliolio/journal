@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 
 import { assertAuthorToken } from "@/lib/auth";
 import { db } from "@/lib/db/client";
-import { partners } from "@/lib/db/schema";
+import { partners, PERSON_KEYS } from "@/lib/db/schema";
 import { setCurrentUser } from "@/lib/cookies";
 import type { PersonKey } from "@/lib/db/schema";
 
@@ -42,8 +42,9 @@ export async function setupPartnersAction(formData: FormData): Promise<void> {
 }
 
 /**
- * Partner accepting the shared link: claim the empty name2 slot and set
- * the cookie so future visits go straight to the canvas.
+ * Someone accepting the shared link: claim the next empty name slot
+ * (name2 → name3 → name4) and set the cookie so future visits go straight
+ * to the canvas.
  */
 export async function joinAsPartnerAction(formData: FormData): Promise<void> {
   assertAuthorToken(formData.get("authToken"));
@@ -54,12 +55,20 @@ export async function joinAsPartnerAction(formData: FormData): Promise<void> {
   if (!row) {
     throw new Error("Setup hasn't started yet.");
   }
-  if (row.name2) {
-    throw new Error("Both partners are already set up.");
+
+  let slot: PersonKey | null = null;
+  if (!row.name2) slot = "name2";
+  else if (!row.name3) slot = "name3";
+  else if (!row.name4) slot = "name4";
+  if (!slot) {
+    throw new Error("All four seats are already filled.");
   }
 
-  await db.update(partners).set({ name2: name }).where(eq(partners.id, row.id));
-  await setCurrentUser("name2");
+  await db
+    .update(partners)
+    .set({ [slot]: name })
+    .where(eq(partners.id, row.id));
+  await setCurrentUser(slot);
   revalidatePath("/");
   redirect("/");
 }
@@ -67,10 +76,10 @@ export async function joinAsPartnerAction(formData: FormData): Promise<void> {
 export async function pickCurrentUserAction(formData: FormData): Promise<void> {
   assertAuthorToken(formData.get("authToken"));
   const key = formData.get("personKey");
-  if (key !== "name1" && key !== "name2") {
+  if (typeof key !== "string" || !(PERSON_KEYS as readonly string[]).includes(key)) {
     throw new Error("Invalid person key.");
   }
-  await setCurrentUser(key satisfies PersonKey);
+  await setCurrentUser(key as PersonKey);
   revalidatePath("/");
   redirect("/");
 }

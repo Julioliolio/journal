@@ -5,10 +5,10 @@ import { useState, useTransition } from "react";
 import { joinAsPartnerAction } from "@/app/actions/partners";
 
 export function JoinForm({
-  creatorName,
+  knownNames,
   authToken,
 }: {
-  creatorName: string;
+  knownNames: string[];
   authToken: string;
 }) {
   const [pending, startTransition] = useTransition();
@@ -17,7 +17,7 @@ export function JoinForm({
   return (
     <main className="setup-shell">
       <div className="setup-card">
-        <h1>join {creatorName}</h1>
+        <h1>join {formatNames(knownNames)}</h1>
         <p>pick your name. you’ll be able to switch any time.</p>
         <form
           action={(fd) => {
@@ -60,4 +60,11 @@ export function JoinForm({
       </div>
     </main>
   );
+}
+
+function formatNames(names: string[]): string {
+  if (names.length === 0) return "";
+  if (names.length === 1) return names[0]!;
+  if (names.length === 2) return `${names[0]} & ${names[1]}`;
+  return `${names.slice(0, -1).join(", ")} & ${names[names.length - 1]}`;
 }

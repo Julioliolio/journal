@@ -89,8 +89,21 @@ export default async function LoginPage({
     );
   }
 
-  if (!partners.name2) {
-    return <JoinForm creatorName={partners.name1} authToken={token} />;
+  const nextEmpty = !partners.name2
+    ? "name2"
+    : !partners.name3
+      ? "name3"
+      : !partners.name4
+        ? "name4"
+        : null;
+
+  if (nextEmpty) {
+    const knownNames = [
+      partners.name1,
+      partners.name2,
+      partners.name3,
+    ].filter((n): n is string => Boolean(n));
+    return <JoinForm knownNames={knownNames} authToken={token} />;
   }
 
   return <UserPicker partners={partners} authToken={token} />;

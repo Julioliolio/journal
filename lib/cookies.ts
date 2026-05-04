@@ -1,7 +1,7 @@
 import "server-only";
 import { cookies } from "next/headers";
 
-import type { PersonKey } from "./db/schema";
+import { PERSON_KEYS, type PersonKey } from "./db/schema";
 
 const COOKIE_NAME = "current_user";
 const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365;
@@ -9,7 +9,9 @@ const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365;
 export async function getCurrentUser(): Promise<PersonKey | null> {
   const store = await cookies();
   const value = store.get(COOKIE_NAME)?.value;
-  return value === "name1" || value === "name2" ? value : null;
+  return (PERSON_KEYS as readonly string[]).includes(value ?? "")
+    ? (value as PersonKey)
+    : null;
 }
 
 export async function setCurrentUser(key: PersonKey): Promise<void> {

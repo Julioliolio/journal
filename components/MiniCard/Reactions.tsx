@@ -107,11 +107,16 @@ export function Reactions({
     return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [revealed]);
 
+  // Demo cards live only in client memory — skip server writes for them.
+  const isDemoCard = cardId.startsWith("demo-");
+
   function add(picked: PickerSelection) {
     setPickerOpen(false);
     setRevealed(false);
     setError(null);
-    const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const tempId = isDemoCard
+      ? `demo-r-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+      : `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const optimistic: Reaction =
       picked.kind === "emoji"
         ? {
@@ -134,6 +139,11 @@ export function Reactions({
           };
     spliceReaction(qc, optimistic);
     haptic.trigger("light");
+
+    if (isDemoCard) {
+      trackMyReaction(tempId);
+      return;
+    }
 
     const input: AddReactionInput =
       picked.kind === "emoji"
@@ -161,6 +171,7 @@ export function Reactions({
     setError(null);
     const previous = reactions.find((r) => r.id === id);
     removeReactionFromCache(qc, id);
+    if (isDemoCard || id.startsWith("demo-r-")) return;
     startTransition(async () => {
       try {
         await removeReactionAction(id);

@@ -90,8 +90,22 @@ textarea {
 .canvas-desktop {
   flex: 1;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* grid-template-columns is set inline by Canvas based on how many
+     people are currently open; this fallback covers the single-column
+     case before hydration. */
+  grid-template-columns: minmax(0, 1fr);
   min-height: 0;
+}
+
+.canvas-column {
+  min-width: 0;
+  height: 100%;
+  display: flex;
+}
+
+.canvas-column > .half {
+  flex: 1;
+  min-width: 0;
 }
 
 .canvas-mobile {
@@ -1270,40 +1284,6 @@ textarea {
   padding: 6px 4px;
 }
 
-/* The right half before the partner has joined: shown in place of a
-   <Half/> so it inherits the same column geometry, but it's a quiet
-   invite-to-share placeholder rather than a scrollable card stack. */
-.waiting-half {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.waiting-inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 32px 24px;
-  text-align: center;
-  max-width: 320px;
-}
-
-.waiting-eyebrow {
-  font-size: 11px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--color-ink-soft);
-  margin: 0;
-}
-
-.waiting-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--color-ink);
-  margin: 0 0 4px;
-}
-
 .empty-centered {
   display: flex;
   flex-direction: column;
@@ -1498,33 +1478,88 @@ textarea {
   }
 }
 
-/* Mobile tab horizontal slide: both halves render inside a track
-   that translates -50% when the second tab is active. */
+/* Mobile: top tab strip + a single full-width Half below. */
 .canvas-mobile {
-  overflow: hidden;
-  position: relative;
-}
-
-.canvas-mobile-track {
+  flex: 1;
   display: flex;
-  width: 200%;
-  height: 100%;
-  transition: transform 320ms cubic-bezier(0.32, 0.72, 0.32, 1);
+  flex-direction: column;
+  min-height: 0;
 }
 
-.canvas-mobile-track > * {
-  width: 50%;
+.canvas-mobile > .half {
+  flex: 1;
+  min-height: 0;
+}
+
+.canvas-mobile-tabs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 16px 8px;
   flex-shrink: 0;
-  height: 100%;
-  min-width: 0;
 }
 
-.canvas-mobile-track[data-tab="name1"] {
-  transform: translateX(0);
+.mobile-tab {
+  cursor: pointer;
+  transition:
+    background 140ms ease,
+    color 140ms ease,
+    border-color 140ms ease,
+    transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.canvas-mobile-track[data-tab="name2"] {
-  transform: translateX(-50%);
+.mobile-tab[aria-selected="true"] {
+  background: var(--color-ink);
+  color: var(--color-canvas);
+}
+
+/* Top rail of pills for hidden people on desktop. */
+.canvas-rail {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 24px 10px;
+  flex-shrink: 0;
+}
+
+.canvas-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-ink-mute);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+
+.rail-pill {
+  cursor: pointer;
+  transition:
+    background 140ms ease,
+    color 140ms ease,
+    border-color 140ms ease,
+    transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@media (hover: hover) {
+  .rail-pill:hover,
+  .canvas-column .name-pill-toggle:hover {
+    transform: translateY(-1px) scale(1.04);
+  }
+}
+
+.rail-pill:active,
+.canvas-column .name-pill-toggle:active {
+  transform: scale(0.94);
+  transition-duration: 90ms;
+}
+
+.invite-pill {
+  cursor: pointer;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1546,7 +1581,8 @@ textarea {
   .dropzone-status[data-progress]::before,
   .today-pill,
   .name-pill-toggle,
-  .canvas-mobile-track,
+  .rail-pill,
+  .mobile-tab,
   .sortable-wrap {
     animation: none !important;
     transition: none !important;

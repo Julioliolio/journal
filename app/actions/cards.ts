@@ -4,7 +4,12 @@ import { and, eq, max } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 import { db } from "@/lib/db/client";
-import { cards, type Card, type CardType } from "@/lib/db/schema";
+import {
+  cards,
+  type Card,
+  type CardType,
+  type PersonKey,
+} from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/cookies";
 import { newId } from "@/lib/ids";
 import { notifyClients } from "@/lib/notify";
@@ -42,7 +47,7 @@ const SHORT_MAX = 1000;
 const CAPTION_MAX = 280;
 const URL_MAX = 1000;
 
-async function requireUser(): Promise<"name1" | "name2"> {
+async function requireUser(): Promise<PersonKey> {
   const user = await getCurrentUser();
   if (!user) throw new Error("Not signed in.");
   return user;
@@ -76,7 +81,7 @@ function requireClip(input: unknown, max: number, fieldName: string): string {
 }
 
 async function nextPosition(
-  personKey: "name1" | "name2",
+  personKey: PersonKey,
   date: string,
 ): Promise<number> {
   const rows = await db
@@ -187,7 +192,7 @@ export async function createReflectionAction(
 
 async function loadOwnedCard(
   id: string,
-  personKey: "name1" | "name2",
+  personKey: PersonKey,
   clientToday: string,
 ) {
   const row = await db
