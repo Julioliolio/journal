@@ -97,11 +97,6 @@ textarea {
   min-height: 0;
 }
 
-.canvas-mobile {
-  flex: 1;
-  min-height: 0;
-}
-
 .half {
   height: 100%;
   overflow-y: auto;
