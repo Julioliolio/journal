@@ -51,6 +51,7 @@ export function Half({
   if (isOwn && !dates.includes(today)) dates.unshift(today);
 
   const halfRef = useRef<HTMLElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const initialDate = dates[0] ?? today;
   const [currentDate, setCurrentDate] = useState(initialDate);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -67,11 +68,12 @@ export function Half({
   // applies when there's actual content scrolling under it.
   const datesKey = dates.join(",");
   useEffect(() => {
-    const root = halfRef.current;
-    if (!root) return;
+    const root = scrollRef.current;
+    const section = halfRef.current;
+    if (!root || !section) return;
 
     const updateScrolled = () => {
-      root.dataset.scrolled = root.scrollTop > 4 ? "true" : "false";
+      section.dataset.scrolled = root.scrollTop > 4 ? "true" : "false";
     };
     updateScrolled();
     root.addEventListener("scroll", updateScrolled, { passive: true });
@@ -149,7 +151,7 @@ export function Half({
   }, [namePickerOpen]);
 
   function jumpTo(date: string) {
-    const root = halfRef.current;
+    const root = scrollRef.current;
     if (!root) return;
     const card = root.querySelector<HTMLElement>(
       `[data-date="${date}"]`,
@@ -167,10 +169,9 @@ export function Half({
 
   const canPick = dates.length > 1;
 
-  const body = (
-    <>
-      <header className="half-header">
-        <div className="half-header-inner">
+  const header = (
+    <header className="half-header">
+      <div className="half-header-inner">
           {onToggle ? (
             <button
               ref={pillRef}
@@ -265,7 +266,11 @@ export function Half({
             </span>
           )}
         </div>
-      </header>
+    </header>
+  );
+
+  const scrollContent = (
+    <div className="half-scroll" ref={scrollRef}>
       <div className="half-inner">
         {dates.length === 0 && (
           <div className="empty-centered">
@@ -290,7 +295,7 @@ export function Half({
           })}
         </div>
       </div>
-    </>
+    </div>
   );
 
   const setSection = (el: HTMLElement | null) => {
@@ -306,7 +311,8 @@ export function Half({
         data-person={personKey}
         aria-label={`${label} side`}
       >
-        <DropZone today={today}>{body}</DropZone>
+        {header}
+        <DropZone today={today}>{scrollContent}</DropZone>
       </section>
     );
   }
@@ -318,7 +324,8 @@ export function Half({
       data-person={personKey}
       aria-label={`${label} side`}
     >
-      {body}
+      {header}
+      {scrollContent}
     </section>
   );
 }

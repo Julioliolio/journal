@@ -100,6 +100,21 @@ textarea {
 
 .half {
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.half > .dropzone-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.half-scroll {
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
@@ -107,11 +122,11 @@ textarea {
   scrollbar-color: var(--color-line) transparent;
 }
 
-.half::-webkit-scrollbar {
+.half-scroll::-webkit-scrollbar {
   width: 8px;
 }
 
-.half::-webkit-scrollbar-thumb {
+.half-scroll::-webkit-scrollbar-thumb {
   background: var(--color-line);
   border-radius: 4px;
 }
@@ -126,8 +141,7 @@ textarea {
 }
 
 .half-header {
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 5;
   background: var(--color-canvas);
 }
