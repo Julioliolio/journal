@@ -1351,6 +1351,372 @@ textarea {
   justify-content: flex-end;
 }
 
+/* ---------- login redesign ---------- */
+
+.login-shell {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  background: var(--color-canvas);
+}
+
+/* Card: soft entrance + ambient settle-shadow. Padding follows an 8px
+   rhythm — slightly more on top so the heading + stamp have headroom. */
+.login-card {
+  position: relative;
+  width: min(420px, 100%);
+  background: var(--color-day);
+  border-radius: var(--radius-day);
+  padding: 40px 32px 32px;
+  opacity: 0;
+  transform: translateY(8px) scale(0.985);
+  animation: login-card-enter 520ms cubic-bezier(0.22, 1, 0.36, 1) 60ms forwards,
+    login-card-shadow 1200ms ease 600ms forwards;
+}
+
+@media (max-width: 480px) {
+  .login-card {
+    padding: 32px 24px 24px;
+  }
+}
+
+@keyframes login-card-enter {
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes login-card-shadow {
+  to {
+    box-shadow: 0 30px 60px -30px rgba(27, 26, 24, 0.18),
+      0 6px 16px -8px rgba(27, 26, 24, 0.08);
+  }
+}
+
+/* Stagger the card's children — each row settles in slightly after
+   the card itself lands. Covers up to 6 children for the full gate
+   layout (heading, subtitle, picker, divider, form, [error]). */
+.login-card > * {
+  opacity: 0;
+  transform: translateY(4px);
+  animation: login-row-in 420ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.login-card > *:nth-child(1) {
+  animation-delay: 200ms;
+}
+.login-card > *:nth-child(2) {
+  animation-delay: 260ms;
+}
+.login-card > *:nth-child(3) {
+  animation-delay: 320ms;
+}
+.login-card > *:nth-child(4) {
+  animation-delay: 380ms;
+}
+.login-card > *:nth-child(5) {
+  animation-delay: 440ms;
+}
+.login-card > *:nth-child(6) {
+  animation-delay: 500ms;
+}
+
+@keyframes login-row-in {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Heading + the tiny ink "stamp" mark that breathes. */
+.login-card h1 {
+  font-size: 24px;
+  line-height: 1.25;
+  font-weight: 600;
+  margin: 0 0 8px;
+  letter-spacing: -0.01em;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  /* Crossfade-on-content-change for the live greeting echo. */
+  transition: color 200ms ease;
+}
+
+.login-card h1 .login-stamp {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-ink);
+  /* Optical alignment: nudge down so the dot sits at x-height of the
+     uppercase forms, not the geometric center of the line box. */
+  transform: translateY(1px) scale(0);
+  animation: login-stamp-draw 420ms cubic-bezier(0.34, 1.56, 0.64, 1) 520ms
+      forwards,
+    login-stamp-breathe 3.6s ease-in-out 1100ms infinite;
+  transform-origin: 50% 50%;
+}
+
+@keyframes login-stamp-draw {
+  0% {
+    transform: translateY(1px) scale(0) rotate(-30deg);
+  }
+  60% {
+    transform: translateY(1px) scale(1.35) rotate(0deg);
+  }
+  100% {
+    transform: translateY(1px) scale(1) rotate(0deg);
+  }
+}
+
+@keyframes login-stamp-breathe {
+  0%,
+  100% {
+    transform: translateY(1px) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(1px) scale(1.2);
+    opacity: 0.78;
+  }
+}
+
+.login-card p {
+  margin: 0 0 24px;
+  color: var(--color-ink-soft);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Greeting word — the part of the heading that morphs to the typed name.
+   Uses a soft fade+slide whenever its key changes. */
+.login-greet {
+  display: inline-block;
+  animation: login-greet-pop 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes login-greet-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Field with a center-out underline on focus. */
+.login-field {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.login-field label {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+  margin-bottom: 8px;
+}
+
+.login-field input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--color-line);
+  background: var(--color-paper);
+  font-size: 16px;
+  line-height: 1.4;
+  outline: none;
+  transition: border-color 160ms ease, box-shadow 220ms ease,
+    transform 220ms ease;
+}
+
+.login-field input:hover:not(:disabled) {
+  border-color: rgba(27, 26, 24, 0.18);
+}
+
+.login-field input:focus {
+  border-color: rgba(27, 26, 24, 0.28);
+  box-shadow: 0 0 0 4px rgba(27, 26, 24, 0.05);
+}
+
+/* Underline that draws from the center on focus. */
+.login-field::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 0;
+  height: 2px;
+  background: var(--color-ink);
+  border-radius: 2px;
+  transform: translateX(-50%);
+  transition: width 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 200ms ease;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.login-field:focus-within::after {
+  width: 72%;
+  opacity: 1;
+}
+
+.login-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 24px;
+  justify-content: flex-end;
+}
+
+/* "Saved" check morph for the submit pill. Triggered by data-saved. */
+.pill[data-saved="true"] {
+  position: relative;
+  pointer-events: none;
+  animation: pill-saved-pop 480ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.pill[data-saved="true"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  display: block;
+  background:
+    linear-gradient(45deg, transparent 47%, currentColor 47% 53%, transparent 53%)
+      no-repeat,
+    linear-gradient(-45deg, transparent 47%, currentColor 47% 53%, transparent 53%)
+      no-repeat;
+  background-size: 35% 2px, 55% 2px;
+  background-position: 28% 56%, 50% 56%;
+  opacity: 0;
+  animation: pill-check-draw 360ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  border-radius: inherit;
+}
+
+@keyframes pill-saved-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes pill-check-draw {
+  to {
+    opacity: 1;
+  }
+}
+
+/* Divider — between the picker pills and the "add yourself" input.
+   Greater top margin than bottom so the label below sits closer to
+   what it labels (the input field). */
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 28px 0 20px;
+  color: var(--color-ink-soft);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.login-divider::before,
+.login-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--color-line);
+}
+
+/* ---------- picker stage ---------- */
+
+.login-picker {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Each pill staggers in. Slightly bouncy curve so they land like
+   place-cards. */
+.login-picker .pill {
+  font-size: 14px;
+  padding: 10px 18px;
+  opacity: 0;
+  transform: translateY(6px) scale(0.96);
+  animation: login-pill-in 420ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  transition: background 180ms ease, color 180ms ease,
+    border-color 180ms ease,
+    transform 260ms cubic-bezier(0.34, 1.45, 0.55, 1),
+    opacity 200ms ease, filter 280ms ease;
+}
+
+.login-picker .pill:nth-child(1) {
+  animation-delay: 480ms;
+}
+.login-picker .pill:nth-child(2) {
+  animation-delay: 560ms;
+}
+.login-picker .pill:nth-child(3) {
+  animation-delay: 640ms;
+}
+.login-picker .pill:nth-child(4) {
+  animation-delay: 720ms;
+}
+
+@keyframes login-pill-in {
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.login-picker .pill:hover:not(:disabled) {
+  transform: translateY(-2px) rotate(-3deg) scale(1.05);
+}
+
+.login-picker .pill:active:not(:disabled) {
+  transform: translateY(0) rotate(-3deg) scale(0.97);
+}
+
+/* When one pill is chosen, soften the others and bloom the chosen one. */
+.login-picker[data-chosen] .pill:not([data-chosen="true"]) {
+  opacity: 0.35;
+  filter: saturate(0.6);
+  transform: scale(0.96);
+}
+
+.login-picker[data-chosen] .pill[data-chosen="true"] {
+  background: var(--color-ink);
+  color: var(--color-paper);
+  border-color: var(--color-ink);
+  transform: translateY(-3px) scale(1.12);
+  box-shadow: 0 14px 28px -14px rgba(27, 26, 24, 0.4);
+}
+
+/* Reduced-motion: kill the elaborate enters. Card still fades. */
+@media (prefers-reduced-motion: reduce) {
+  .login-card,
+  .login-card > *,
+  .login-card h1 .login-stamp,
+  .login-picker .pill {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* ---------- animations ---------- */
 
 @keyframes card-enter {
