@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 
-import type { CardType } from "@/lib/db/schema";
-
 import { NoteForm } from "./NoteForm";
 import { ReflectionForm } from "./ReflectionForm";
+
+type Mode = "note" | "reflection";
 
 export function Composer({
   today,
@@ -14,16 +14,16 @@ export function Composer({
   today: string;
   reflectionExists: boolean;
 }) {
-  const [type, setType] = useState<CardType | null>(null);
+  const [mode, setMode] = useState<Mode | null>(null);
 
-  if (!type) {
+  if (!mode) {
     return (
       <div className="composer-slot">
         <div className="composer-pills">
           <button
             type="button"
             className="pill pill-bouncy"
-            onClick={() => setType("note")}
+            onClick={() => setMode("note")}
           >
             + note
           </button>
@@ -31,7 +31,7 @@ export function Composer({
             <button
               type="button"
               className="pill pill-bouncy"
-              onClick={() => setType("reflection")}
+              onClick={() => setMode("reflection")}
             >
               + reflection
             </button>
@@ -41,16 +41,11 @@ export function Composer({
     );
   }
 
-  const close = () => setType(null);
-
+  const close = () => setMode(null);
+  const Form = mode === "note" ? NoteForm : ReflectionForm;
   return (
-    <div style={{ marginBottom: 12 }}>
-      {(type === "note" || type === "note_image" || type === "image") && (
-        <NoteForm today={today} onDone={close} />
-      )}
-      {type === "reflection" && (
-        <ReflectionForm today={today} onDone={close} />
-      )}
+    <div className="composer-active">
+      <Form today={today} onDone={close} />
     </div>
   );
 }

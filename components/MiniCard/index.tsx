@@ -1,55 +1,36 @@
 "use client";
 
-import type { Card, Reaction } from "@/lib/db/schema";
+import type { ComponentType } from "react";
+
+import type { Card, CardType, Reaction } from "@/lib/db/schema";
 
 import { NoteCard } from "./NoteCard";
 import { NoteImageCard } from "./NoteImageCard";
 import { ReflectionCard } from "./ReflectionCard";
 
-export function MiniCard({
-  card,
-  reactions = [],
-  isOwn,
-  editable,
-  isFresh = false,
-}: {
+type CardProps = {
   card: Card;
-  reactions?: Reaction[];
+  reactions: Reaction[];
   isOwn: boolean;
   editable: boolean;
   isFresh?: boolean;
+};
+
+const VARIANTS: Record<CardType, ComponentType<CardProps>> = {
+  note: NoteCard,
+  image: NoteImageCard,
+  note_image: NoteImageCard,
+  reflection: ReflectionCard,
+};
+
+export function MiniCard({
+  reactions = [],
+  isFresh = false,
+  ...rest
+}: Omit<CardProps, "reactions" | "isFresh"> & {
+  reactions?: Reaction[];
+  isFresh?: boolean;
 }) {
-  switch (card.type) {
-    case "note":
-      return (
-        <NoteCard
-          card={card}
-          reactions={reactions}
-          isOwn={isOwn}
-          editable={editable}
-          isFresh={isFresh}
-        />
-      );
-    case "image":
-    case "note_image":
-      return (
-        <NoteImageCard
-          card={card}
-          reactions={reactions}
-          isOwn={isOwn}
-          editable={editable}
-          isFresh={isFresh}
-        />
-      );
-    case "reflection":
-      return (
-        <ReflectionCard
-          card={card}
-          reactions={reactions}
-          isOwn={isOwn}
-          editable={editable}
-          isFresh={isFresh}
-        />
-      );
-  }
+  const Component = VARIANTS[rest.card.type];
+  return <Component reactions={reactions} isFresh={isFresh} {...rest} />;
 }

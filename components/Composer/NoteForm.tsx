@@ -13,6 +13,7 @@ import { processImage, IMAGE_ACCEPT_ATTR } from "@/lib/image";
 import { AutoGrowTextarea } from "@/components/AutoGrowTextarea";
 import { useSubmitMorph } from "@/lib/hooks/useSubmitMorph";
 import type { PickerSelection } from "@/lib/giphy-types";
+import { invalidateCanvas } from "@/lib/queries";
 
 import { GiphyPicker } from "./GiphyPicker";
 
@@ -107,10 +108,7 @@ export function NoteForm({
       // Awaiting invalidateQueries ensures the just-saved card is in
       // the cache (and rendered in the day stack) by the time the form
       // unmounts — no empty gap between form-close and card-in.
-      await Promise.all([
-        flash(),
-        qc.invalidateQueries({ queryKey: ["canvas"] }),
-      ]);
+      await Promise.all([flash(), invalidateCanvas(qc)]);
       onDone();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed.");

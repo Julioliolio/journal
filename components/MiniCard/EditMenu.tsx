@@ -9,6 +9,7 @@ import {
 } from "@/app/actions/cards";
 import { todayISO } from "@/lib/date";
 import type { Card } from "@/lib/db/schema";
+import { invalidateCanvas } from "@/lib/queries";
 
 export function EditMenu({
   card,
@@ -40,7 +41,7 @@ export function EditMenu({
         deleteCardAction(fd),
         new Promise((r) => setTimeout(r, ANIM_MS)),
       ]);
-      qc.invalidateQueries({ queryKey: ["canvas"] });
+      invalidateCanvas(qc);
     });
   }
 
@@ -104,6 +105,6 @@ export function useUpdateCard() {
   return async function update(formData: FormData): Promise<void> {
     formData.set("clientToday", todayISO());
     await updateCardAction(formData);
-    qc.invalidateQueries({ queryKey: ["canvas"] });
+    invalidateCanvas(qc);
   };
 }

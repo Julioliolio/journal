@@ -18,6 +18,8 @@ import {
   type PersonKey,
   type Reaction,
 } from "@/lib/db/schema";
+import { useIsMobile } from "@/lib/hooks/useIsMobile";
+import { CANVAS_KEY, invalidateCanvas } from "@/lib/queries";
 
 import { Half } from "./Half";
 import { ThemeToggle } from "./ThemeToggle";
@@ -39,7 +41,7 @@ export function Canvas({
 
   useEffect(() => {
     const es = new EventSource("/api/events");
-    const refetch = () => queryClient.invalidateQueries({ queryKey: ["canvas"] });
+    const refetch = () => invalidateCanvas(queryClient);
     es.onmessage = refetch;
     let connected = false;
     es.onopen = () => {
@@ -50,7 +52,7 @@ export function Canvas({
   }, [queryClient]);
 
   const { data } = useQuery({
-    queryKey: ["canvas"],
+    queryKey: CANVAS_KEY,
     queryFn: getCanvasDataAction,
     initialData,
     refetchInterval: 60_000,
@@ -75,11 +77,13 @@ export function Canvas({
   const [today, setToday] = useState(() => todayISO());
   useEffect(() => {
     const id = setInterval(() => {
-      const next = todayISO();
-      if (next !== today) setToday(next);
+      setToday((prev) => {
+        const next = todayISO();
+        return next === prev ? prev : next;
+      });
     }, 60_000);
     return () => clearInterval(id);
-  }, [today]);
+  }, []);
 
   const people: Person[] = useMemo(() => {
     return PERSON_KEYS.map((key) => ({
@@ -446,14 +450,3 @@ function InviteButton({ inviteUrl }: { inviteUrl: string }) {
   );
 }
 
-function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 767px)");
-    const update = () => setIsMobile(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
-  return isMobile;
-}

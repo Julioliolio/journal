@@ -56,10 +56,7 @@ export async function joinAsPartnerAction(formData: FormData): Promise<void> {
     throw new Error("Setup hasn't started yet.");
   }
 
-  let slot: PersonKey | null = null;
-  if (!row.name2) slot = "name2";
-  else if (!row.name3) slot = "name3";
-  else if (!row.name4) slot = "name4";
+  const slot = (["name2", "name3", "name4"] as const).find((k) => !row[k]);
   if (!slot) {
     throw new Error("All four seats are already filled.");
   }

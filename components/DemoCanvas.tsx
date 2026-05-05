@@ -7,6 +7,8 @@ import { getCanvasDataAction, type CanvasData } from "@/app/actions/data";
 import { todayISO } from "@/lib/date";
 import { DEMO_PARTNERS, buildDemoData } from "@/lib/demo-data";
 import type { PersonKey, Reaction } from "@/lib/db/schema";
+import { useIsMobile } from "@/lib/hooks/useIsMobile";
+import { CANVAS_KEY, invalidateCanvas } from "@/lib/queries";
 
 import { Half } from "./Half";
 import { ThemeToggle } from "./ThemeToggle";
@@ -38,23 +40,25 @@ export function DemoCanvas() {
 
   useEffect(() => {
     const id = setInterval(() => {
-      const next = todayISO();
-      if (next !== today) setToday(next);
+      setToday((prev) => {
+        const next = todayISO();
+        return next === prev ? prev : next;
+      });
     }, 60_000);
     return () => clearInterval(id);
-  }, [today]);
+  }, []);
 
   // Tail SSE so live writes (composer save, reactions) refresh the merge.
   useEffect(() => {
     const es = new EventSource("/api/events");
-    es.onmessage = () => qc.invalidateQueries({ queryKey: ["canvas"] });
+    es.onmessage = () => invalidateCanvas(qc);
     return () => es.close();
   }, [qc]);
 
-  // queryKey must be ["canvas"] so the existing Composer/EditMenu/Reactions
+  // queryKey must be CANVAS_KEY so the existing Composer/EditMenu/Reactions
   // components hit the same cache when they invalidate or splice.
   const { data } = useQuery<CanvasData & { __demo: true }>({
-    queryKey: ["canvas"],
+    queryKey: CANVAS_KEY,
     queryFn: async () => {
       const mock = buildDemoData(today);
       let real: CanvasData | null = null;
@@ -152,14 +156,3 @@ export function DemoCanvas() {
   );
 }
 
-function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 767px)");
-    const update = () => setIsMobile(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
-  return isMobile;
-}

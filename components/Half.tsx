@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { formatDayHeader } from "@/lib/date";
 import type { Card, PersonKey, Reaction } from "@/lib/db/schema";
+import { useEscapeKey } from "@/lib/hooks/useEscapeKey";
 
 import { DayCard } from "./DayCard";
 import { DropZone } from "./DropZone";
@@ -107,7 +108,7 @@ export function Half({
     };
   }, [datesKey]);
 
-  // Close the picker on outside click or Escape.
+  useEscapeKey(() => setPickerOpen(false));
   useEffect(() => {
     if (!pickerOpen) return;
     const onMouseDown = (e: MouseEvent) => {
@@ -118,15 +119,8 @@ export function Half({
         setPickerOpen(false);
       }
     };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setPickerOpen(false);
-    };
     document.addEventListener("mousedown", onMouseDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onMouseDown);
-      document.removeEventListener("keydown", onKey);
-    };
+    return () => document.removeEventListener("mousedown", onMouseDown);
   }, [pickerOpen]);
 
   function jumpTo(date: string) {

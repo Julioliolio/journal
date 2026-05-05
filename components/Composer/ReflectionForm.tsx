@@ -7,6 +7,7 @@ import { useWebHaptics } from "web-haptics/react";
 import { createReflectionAction } from "@/app/actions/cards";
 import { AutoGrowTextarea } from "@/components/AutoGrowTextarea";
 import { useSubmitMorph } from "@/lib/hooks/useSubmitMorph";
+import { invalidateCanvas } from "@/lib/queries";
 
 import { FeltImagePicker } from "./FeltImagePicker";
 
@@ -45,10 +46,7 @@ export function ReflectionForm({
             // in the cache (and rendered in the day stack) by the time
             // the form unmounts — no empty gap between form-close and
             // card-in.
-            await Promise.all([
-              flash(),
-              qc.invalidateQueries({ queryKey: ["canvas"] }),
-            ]);
+            await Promise.all([flash(), invalidateCanvas(qc)]);
             onDone();
           } catch (err) {
             setError(err instanceof Error ? err.message : "Save failed.");

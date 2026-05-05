@@ -620,6 +620,10 @@ textarea {
   transition: grid-template-rows 220ms ease;
 }
 
+.composer-active {
+  margin-bottom: 12px;
+}
+
 .composer-slot > .composer-pills {
   overflow: clip;
   overflow-clip-margin: 16px;

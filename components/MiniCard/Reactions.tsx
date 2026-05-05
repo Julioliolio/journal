@@ -11,11 +11,15 @@ import {
   type AddReactionInput,
 } from "@/app/actions/reactions";
 import { trackMyReaction, getMyReactionExpiry } from "@/lib/myReactions";
-import type { CanvasData } from "@/app/actions/data";
 import { GiphyPicker } from "@/components/Composer/GiphyPicker";
 import { useEscapeKey } from "@/lib/hooks/useEscapeKey";
 import type { PickerSelection } from "@/lib/giphy-types";
 import type { Reaction } from "@/lib/db/schema";
+import {
+  removeReactionFromCache,
+  replaceReaction,
+  spliceReaction,
+} from "@/lib/queries";
 
 const LONG_PRESS_MS = 380;
 const LONG_PRESS_TRAVEL = 6;
@@ -114,9 +118,7 @@ export function Reactions({
     setPickerOpen(false);
     setRevealed(false);
     setError(null);
-    const tempId = isDemoCard
-      ? `demo-r-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-      : `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const tempId = makeTempId(isDemoCard ? "demo-r" : "temp");
     const optimistic: Reaction =
       picked.kind === "emoji"
         ? {
@@ -376,33 +378,8 @@ function ReactionPreview({
   );
 }
 
-type QC = ReturnType<typeof useQueryClient>;
-
-function spliceReaction(qc: QC, next: Reaction) {
-  qc.setQueryData<CanvasData>(["canvas"], (prev) =>
-    prev ? { ...prev, reactions: [...prev.reactions, next] } : prev,
-  );
-}
-
-function replaceReaction(qc: QC, tempId: string, real: Reaction) {
-  // Race-safe: a background refetch could land between optimistic insert
-  // and server response. Drop both ids before appending so we end up with
-  // exactly one row regardless of who got there first.
-  qc.setQueryData<CanvasData>(["canvas"], (prev) => {
-    if (!prev) return prev;
-    const others = prev.reactions.filter(
-      (r) => r.id !== tempId && r.id !== real.id,
-    );
-    return { ...prev, reactions: [...others, real] };
-  });
-}
-
-function removeReactionFromCache(qc: QC, id: string) {
-  qc.setQueryData<CanvasData>(["canvas"], (prev) =>
-    prev
-      ? { ...prev, reactions: prev.reactions.filter((r) => r.id !== id) }
-      : prev,
-  );
+function makeTempId(prefix: string): string {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 function SmilePlusIcon() {

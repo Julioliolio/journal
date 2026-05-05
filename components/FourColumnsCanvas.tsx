@@ -414,7 +414,7 @@ function OpenColumn({
               key={day.date}
               className="day-card"
               data-date={day.date}
-              style={{ ["--sprout-i" as string]: dayIdx } as React.CSSProperties}
+              style={{ "--sprout-i": dayIdx } as React.CSSProperties}
             >
               <header className="day-card-header">
                 <span className="date-pill">{day.date}</span>
@@ -425,9 +425,7 @@ function OpenColumn({
                   <div
                     key={i}
                     className="card-shell card-light"
-                    style={
-                      { ["--sprout-j" as string]: i } as React.CSSProperties
-                    }
+                    style={{ "--sprout-j": i } as React.CSSProperties}
                   >
                     <div className="markdown">
                       <p>{text}</p>

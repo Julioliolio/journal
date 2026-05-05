@@ -24,6 +24,7 @@ import { useWebHaptics } from "web-haptics/react";
 import { reorderCardsAction } from "@/app/actions/cards";
 import { formatDayHeader } from "@/lib/date";
 import type { Card, Reaction } from "@/lib/db/schema";
+import { invalidateCanvas } from "@/lib/queries";
 
 import { Composer } from "./Composer";
 import { MiniCard } from "./MiniCard";
@@ -168,7 +169,7 @@ function DayBody({
         orderedIds: next,
         clientToday: today,
       });
-      qc.invalidateQueries({ queryKey: ["canvas"] });
+      invalidateCanvas(qc);
     } catch {
       setOrderedIds(cards.map((c) => c.id));
     }

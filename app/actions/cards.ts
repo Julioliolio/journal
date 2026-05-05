@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq, max } from "drizzle-orm";
+import { and, eq, inArray, max, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 import { db } from "@/lib/db/client";
@@ -289,27 +289,34 @@ export async function reorderCardsAction(input: {
     throw new Error("orderedIds is required.");
   }
 
-  const all = await db
-    .select()
-    .from(cards)
-    .where(and(eq(cards.personKey, personKey), eq(cards.date, input.date)));
-  const byId = new Map(all.map((c) => [c.id, c]));
-  for (const id of input.orderedIds) {
-    if (!byId.has(id)) throw new Error(`Unknown card ${id} in this day.`);
-  }
-
   // First in array = top (newest visually) → highest position. Reverse so
-  // index 0 in the input gets the largest position number.
+  // index 0 in the input gets the largest position number. The single
+  // UPDATE also acts as ownership/day check: rowcount must equal the
+  // input length, otherwise the user passed an id that isn't theirs or
+  // belongs to a different day.
   const total = input.orderedIds.length;
-  await db.transaction(async (tx) => {
-    for (let i = 0; i < input.orderedIds.length; i++) {
-      const position = total - i;
-      await tx
-        .update(cards)
-        .set({ position, updatedAt: new Date() })
-        .where(eq(cards.id, input.orderedIds[i]!));
-    }
-  });
+  const cases = sql.join(
+    input.orderedIds.map(
+      (id, i) => sql`when ${cards.id} = ${id} then ${total - i}`,
+    ),
+    sql` `,
+  );
+  const result = await db
+    .update(cards)
+    .set({
+      position: sql`case ${cases} end`,
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(cards.personKey, personKey),
+        eq(cards.date, input.date),
+        inArray(cards.id, input.orderedIds),
+      ),
+    );
+  if (result.rowsAffected !== total) {
+    throw new Error("Some cards were not yours or not in this day.");
+  }
   notifyClients();
   revalidatePath("/");
 }

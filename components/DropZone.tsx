@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { createImageAction } from "@/app/actions/cards";
 import { processImage } from "@/lib/image";
+import { invalidateCanvas } from "@/lib/queries";
 
 type Status =
   | { kind: "idle" }
@@ -38,7 +39,7 @@ export function DropZone({
       if (result?.error) throw new Error(result.error);
       // Hold the "uploading…" indicator until the new card is in cache
       // so it doesn't disappear before the card pops in.
-      await qc.invalidateQueries({ queryKey: ["canvas"] });
+      await invalidateCanvas(qc);
       setStatus({ kind: "idle" });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Upload failed.";
