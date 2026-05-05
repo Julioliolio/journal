@@ -83,8 +83,6 @@ export function TeamDemoCanvas() {
     staleTime: 0,
   });
 
-  const cards = data?.cards ?? [];
-
   const reactionsByCardId = useMemo(() => {
     const map = new Map<string, Reaction[]>();
     for (const r of data?.reactions ?? []) {
@@ -96,6 +94,7 @@ export function TeamDemoCanvas() {
   }, [data?.reactions]);
 
   const people: Person[] = useMemo(() => {
+    const cards = data?.cards ?? [];
     return PERSON_KEYS.map((key) => ({
       key,
       label: DEMO_PARTNERS_TEAM[key],
@@ -104,7 +103,7 @@ export function TeamDemoCanvas() {
       (p): p is Person =>
         typeof p.label === "string" && p.label.length > 0,
     );
-  }, [cards]);
+  }, [data?.cards]);
 
   const isMobile = useIsMobile();
   const currentUser: PersonKey = "name1";
