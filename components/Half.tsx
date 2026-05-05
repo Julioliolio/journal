@@ -20,6 +20,8 @@ export function Half({
   hideToggleIcon = false,
   pillRef,
   sectionRef,
+  nameOptions,
+  onSelectPerson,
 }: {
   personKey: PersonKey;
   label: string;
@@ -34,6 +36,10 @@ export function Half({
   pillRef?: (el: HTMLElement | null) => void;
   /** Captures the outer <section> so the parent can FLIP-animate it. */
   sectionRef?: (el: HTMLElement | null) => void;
+  /** When provided, the name pill becomes a dropdown for switching to
+   *  another person. Used on mobile where there's only one half on screen. */
+  nameOptions?: { key: PersonKey; label: string; isOwn: boolean }[];
+  onSelectPerson?: (key: PersonKey) => void;
 }) {
   const grouped = groupByDate(cards);
 
@@ -123,6 +129,25 @@ export function Half({
     return () => document.removeEventListener("mousedown", onMouseDown);
   }, [pickerOpen]);
 
+  const canPickPerson =
+    !!nameOptions && nameOptions.length > 1 && !!onSelectPerson;
+  const [namePickerOpen, setNamePickerOpen] = useState(false);
+  const namePickerRef = useRef<HTMLDivElement>(null);
+  useEscapeKey(() => setNamePickerOpen(false));
+  useEffect(() => {
+    if (!namePickerOpen) return;
+    const onMouseDown = (e: MouseEvent) => {
+      if (
+        namePickerRef.current &&
+        !namePickerRef.current.contains(e.target as Node)
+      ) {
+        setNamePickerOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onMouseDown);
+    return () => document.removeEventListener("mousedown", onMouseDown);
+  }, [namePickerOpen]);
+
   function jumpTo(date: string) {
     const root = halfRef.current;
     if (!root) return;
@@ -158,6 +183,43 @@ export function Half({
               {isOwn && <span className="you">you</span>}
               {!hideToggleIcon && <SwapIcon />}
             </button>
+          ) : canPickPerson ? (
+            <div className="name-picker-wrap" ref={namePickerRef}>
+              <button
+                ref={pillRef}
+                type="button"
+                className="name-pill name-pill-picker"
+                aria-haspopup="listbox"
+                aria-expanded={namePickerOpen}
+                onClick={() => setNamePickerOpen((v) => !v)}
+              >
+                {label}
+                {isOwn && <span className="you">you</span>}
+                <ChevronDownIcon />
+              </button>
+              {namePickerOpen && (
+                <div className="name-picker" role="listbox">
+                  {nameOptions!.map((opt) => (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      role="option"
+                      aria-selected={opt.key === personKey}
+                      className={`name-picker-item${
+                        opt.key === personKey ? " active" : ""
+                      }`}
+                      onClick={() => {
+                        onSelectPerson!(opt.key);
+                        setNamePickerOpen(false);
+                      }}
+                    >
+                      <span>{opt.label}</span>
+                      {opt.isOwn && <span className="you">you</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           ) : (
             <span ref={pillRef} className="name-pill">
               {label}
@@ -277,6 +339,25 @@ function SwapIcon() {
     >
       <path d="M7 16V4m0 0L3 8m4-4 4 4" />
       <path d="M17 8v12m0 0 4-4m-4 4-4-4" />
+    </svg>
+  );
+}
+
+function ChevronDownIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className="name-picker-chevron"
+    >
+      <path d="m6 9 6 6 6-6" />
     </svg>
   );
 }

@@ -399,21 +399,6 @@ function MobileCanvas({
 
   return (
     <div className="canvas-mobile">
-      <div className="canvas-mobile-tabs" role="tablist">
-        {people.map((p) => (
-          <button
-            key={p.key}
-            type="button"
-            role="tab"
-            aria-selected={p.key === tab}
-            className={`name-pill mobile-tab${p.key === tab ? " active" : ""}`}
-            onClick={() => setTab(p.key)}
-          >
-            {p.label}
-            {currentUser === p.key && <span className="you">you</span>}
-          </button>
-        ))}
-      </div>
       <Half
         key={active.key}
         personKey={active.key}
@@ -422,6 +407,12 @@ function MobileCanvas({
         reactionsByCardId={reactionsByCardId}
         today={today}
         isOwn={currentUser === active.key}
+        nameOptions={people.map((p) => ({
+          key: p.key,
+          label: p.label,
+          isOwn: currentUser === p.key,
+        }))}
+        onSelectPerson={setTab}
       />
     </div>
   );
