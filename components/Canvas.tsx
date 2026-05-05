@@ -24,7 +24,7 @@ import { CANVAS_KEY, invalidateCanvas } from "@/lib/queries";
 import { Half } from "./Half";
 import { ThemeToggle } from "./ThemeToggle";
 
-type Person = { key: PersonKey; label: string; cards: Card[] };
+export type Person = { key: PersonKey; label: string; cards: Card[] };
 
 export function Canvas({
   initialData,
@@ -124,7 +124,7 @@ export function Canvas({
   );
 }
 
-function DesktopCanvas({
+export function DesktopCanvas({
   people,
   currentUser,
   today,
@@ -364,7 +364,7 @@ function DesktopCanvas({
   );
 }
 
-function MobileCanvas({
+export function MobileCanvas({
   people,
   currentUser,
   today,

@@ -1,4 +1,4 @@
-import type { Card, Partners, Reaction } from "@/lib/db/schema";
+import type { Card, Partners, PersonKey, Reaction } from "@/lib/db/schema";
 
 export const DEMO_PARTNERS: Partners = {
   id: 1,
@@ -6,6 +6,15 @@ export const DEMO_PARTNERS: Partners = {
   name2: "Sam",
   name3: null,
   name4: null,
+  createdAt: new Date("2026-04-19T00:00:00Z"),
+};
+
+export const DEMO_PARTNERS_TEAM: Partners = {
+  id: 1,
+  name1: "Julio",
+  name2: "Sam",
+  name3: "JC",
+  name4: "Ale Morales",
   createdAt: new Date("2026-04-19T00:00:00Z"),
 };
 
@@ -49,7 +58,7 @@ type GifR = { kind: "gif"; content: string; w: number; h: number };
 type R = EmojiR | GifR;
 
 type Seed = {
-  person: "name1" | "name2";
+  person: PersonKey;
   daysAgo: number;
   type: "note" | "image" | "note_image" | "reflection";
   text?: string;
@@ -456,7 +465,7 @@ function isoDaysAgo(today: string, n: number): string {
   return dt.toISOString().slice(0, 10);
 }
 
-export function buildDemoData(today: string): {
+function buildFromSeeds(seeds: Seed[], today: string): {
   cards: Card[];
   reactions: Reaction[];
 } {
@@ -465,7 +474,7 @@ export function buildDemoData(today: string): {
 
   // group seeds by (person, date) so positions are sane within each day
   const grouped = new Map<string, Seed[]>();
-  for (const s of SEEDS) {
+  for (const s of seeds) {
     const date = isoDaysAgo(today, s.daysAgo);
     const key = `${s.person}__${date}`;
     const arr = grouped.get(key) ?? [];
@@ -535,4 +544,318 @@ export function buildDemoData(today: string): {
   }
 
   return { cards, reactions };
+}
+
+export function buildDemoData(today: string): {
+  cards: Card[];
+  reactions: Reaction[];
+} {
+  return buildFromSeeds(SEEDS, today);
+}
+
+// ─── Team demo (4 people): Julio + Sam + JC (name3) + Ale (name4) ─────
+// JC and Ale are already mentioned by name in the 2-person seeds as the
+// program facilitators. Their seeds give them the facilitator voice
+// (prepping sessions, sharing news, giving feedback) so the existing
+// references in Julio/Sam's posts land naturally.
+const SEEDS_TEAM_EXTRA: Seed[] = [
+  // ─── 12 days ago — Mon, kickoff ───────────────────────────────────────
+  {
+    person: "name3",
+    daysAgo: 12,
+    type: "reflection",
+    did: "- Día 1!! Sesión 0 de intro al programa.\n- Material listo, slides revisadas, café cargado.\n- Conocimos al grupo: @Julio y @Sam ya con preguntas buenas en la primera hora.",
+    learned:
+      "El primer día se gana siendo claro con las expectativas. 5 sesiones, 1 proyecto final, sin atajos.",
+    felt: "🎬",
+    reactions: [
+      { kind: "emoji", content: "🎬" },
+      { kind: "emoji", content: "🙌" },
+      { kind: "gif", content: G.happy, w: 240, h: 200 },
+    ],
+  },
+  {
+    person: "name4",
+    daysAgo: 12,
+    type: "reflection",
+    did: "- Co-facilité la sesión 0 con @JC.\n- Repartimos las herramientas a explorar entre el grupo.\n- Buen ambiente desde el minuto 1.",
+    learned:
+      "Si el grupo se ríe en la primera media hora, el resto del programa fluye distinto.",
+    felt: "🤝",
+    reactions: [
+      { kind: "emoji", content: "🤝" },
+      { kind: "emoji", content: "🚀" },
+    ],
+  },
+
+  // ─── 11 days ago — Tue ────────────────────────────────────────────────
+  {
+    person: "name3",
+    daysAgo: 11,
+    type: "reflection",
+    did: "- Preparé la sesión de prompts para mañana.\n- Subí ejemplos buenos / malos al doc compartido.",
+    learned:
+      "Un mal prompt no es obvio hasta que ves el output al lado del bueno. Por eso siempre side-by-side.",
+    felt: "📝",
+    reactions: [
+      { kind: "emoji", content: "📝" },
+      { kind: "emoji", content: "💡" },
+    ],
+  },
+  {
+    person: "name4",
+    daysAgo: 11,
+    type: "note",
+    text: "subí una plantilla de Figjam para tomar notas durante las sesiones — la verdad es que @Sam ya la tenía montada mejor 😅",
+    reactions: [
+      { kind: "emoji", content: "😂" },
+      { kind: "emoji", content: "🙌" },
+    ],
+  },
+
+  // ─── 10 days ago — Wed, prompts session ───────────────────────────────
+  {
+    person: "name3",
+    daysAgo: 10,
+    type: "reflection",
+    did: "- Sesión de prompts.\n- Hicimos en vivo 3 reescrituras con el grupo. @Julio sacó un prompt bastante limpio en el segundo intento.",
+    learned:
+      "Enseñar en vivo > slides. Cuando el grupo ve el output cambiando, ya no se les olvida la estructura.",
+    felt: "🔥",
+    reactions: [
+      { kind: "emoji", content: "🔥" },
+      { kind: "emoji", content: "🙌" },
+      { kind: "gif", content: G.yes, w: 356, h: 200 },
+    ],
+  },
+  {
+    person: "name4",
+    daysAgo: 10,
+    type: "note_image",
+    imageUrl: G.u3,
+    text: "el momento exacto en el que el grupo entiende lo que es \"contexto suficiente\"",
+    reactions: [
+      { kind: "emoji", content: "😂" },
+      { kind: "emoji", content: "💡" },
+      { kind: "gif", content: G.carell, w: 358, h: 200 },
+    ],
+  },
+
+  // ─── 9 days ago — Thu, news day ──────────────────────────────────────
+  {
+    person: "name3",
+    daysAgo: 9,
+    type: "reflection",
+    did: "- Curé los links para el news round-up.\n- @Sam llevó el debate sobre Gemma — se notó que venía leído.",
+    learned:
+      "Las mejores discusiones nacen cuando el facilitador deja de hablar a tiempo.",
+    felt: "🎤",
+    reactions: [
+      { kind: "emoji", content: "🎤" },
+      { kind: "emoji", content: "👏" },
+    ],
+  },
+  {
+    person: "name4",
+    daysAgo: 9,
+    type: "note",
+    text: "subí los links del debate al doc compartido por si alguien quiere releer 📎",
+    reactions: [
+      { kind: "emoji", content: "🙏" },
+      { kind: "emoji", content: "📎" },
+    ],
+  },
+
+  // ─── 8 days ago — Fri, end of week 1 ─────────────────────────────────
+  {
+    person: "name3",
+    daysAgo: 8,
+    type: "reflection",
+    did: "- Cierre de semana 1.\n- Repaso rápido con el grupo de lo que ha calado y lo que se ha quedado en el tintero.",
+    learned:
+      "Una semana = suficiente para que aparezcan las preguntas de verdad.",
+    felt: "🍻",
+    reactions: [
+      { kind: "emoji", content: "🍻" },
+      { kind: "emoji", content: "💯" },
+      { kind: "gif", content: G.happy, w: 240, h: 200 },
+    ],
+  },
+  {
+    person: "name4",
+    daysAgo: 8,
+    type: "reflection",
+    did: "- Empecé a explorar ComfyUI por mi cuenta.\n- Le pasé un par de workflows a @Sam que también andaba mirando.",
+    learned:
+      "ComfyUI no es para todo el mundo, pero el que conecte con el flujo de nodos no vuelve atrás.",
+    felt: "🧩",
+    reactions: [
+      { kind: "emoji", content: "🧩" },
+      { kind: "emoji", content: "👀" },
+    ],
+  },
+
+  // ─── 7 days ago — Sat, weekend ───────────────────────────────────────
+  {
+    person: "name4",
+    daysAgo: 7,
+    type: "note",
+    text: "sábado de no abrir el portátil. plan recomendado por @Julio 🛌",
+    reactions: [
+      { kind: "emoji", content: "🛌" },
+      { kind: "gif", content: G.pam, w: 200, h: 200 },
+    ],
+  },
+
+  // ─── 5 days ago — Mon ────────────────────────────────────────────────
+  {
+    person: "name3",
+    daysAgo: 5,
+    type: "reflection",
+    did: "- Sesión 1 con el grupo entero.\n- Quedó claro el esquema: cada uno explora una herramienta y la presenta al resto.\n- Le di feedback a @Julio sobre su propuesta de Stitch.",
+    learned:
+      "Empezar pidiendo entregables concretos cambia la energía del programa entero.",
+    felt: "🎯",
+    reactions: [
+      { kind: "emoji", content: "🎯" },
+      { kind: "emoji", content: "🙌" },
+      { kind: "emoji", content: "💯" },
+    ],
+  },
+  {
+    person: "name4",
+    daysAgo: 5,
+    type: "note",
+    text: "me encantó la plantilla que se montó @Sam para los apuntes — la voy a reusar 👀",
+    reactions: [
+      { kind: "emoji", content: "🙌" },
+      { kind: "emoji", content: "📝" },
+    ],
+  },
+
+  // ─── 4 days ago — Tue ────────────────────────────────────────────────
+  {
+    person: "name4",
+    daysAgo: 4,
+    type: "reflection",
+    did: "- Acompañé a @Julio en la prep de la demo de Stitch.\n- Hicimos 2 rondas de iteración sobre los casos de uso.",
+    learned:
+      "Cuando preparas una demo con alguien, sales aprendiendo tú también — no es solo dar feedback.",
+    felt: "🤝",
+    reactions: [
+      { kind: "emoji", content: "🤝" },
+      { kind: "emoji", content: "👏" },
+      { kind: "gif", content: G.yes, w: 356, h: 200 },
+    ],
+  },
+  {
+    person: "name3",
+    daysAgo: 4,
+    type: "reflection",
+    did: "- Preparé los materiales para la sesión 3.\n- Probé yo solo el playground local de Gemma para anticipar dudas.",
+    learned:
+      "Si lo pruebas tú primero, los errores que ves son los mismos que va a ver el grupo en vivo.",
+    felt: "🛠️",
+    reactions: [
+      { kind: "emoji", content: "🛠️" },
+      { kind: "emoji", content: "💻" },
+    ],
+  },
+
+  // ─── 3 days ago — Wed ────────────────────────────────────────────────
+  {
+    person: "name3",
+    daysAgo: 3,
+    type: "reflection",
+    did: "- Sesión 4 — playground en vivo.\n- @Sam montó Gemma local en su máquina y aguantó (a duras penas, pero aguantó).\n- @Julio hizo la demo de Stitch y le salió redonda.",
+    learned:
+      "Una sesión sale bien cuando el grupo ya no necesita al facilitador para destrabarse.",
+    felt: "🚀",
+    reactions: [
+      { kind: "emoji", content: "🚀" },
+      { kind: "emoji", content: "🙌" },
+      { kind: "emoji", content: "🔥" },
+      { kind: "gif", content: G.happy, w: 240, h: 200 },
+    ],
+  },
+  {
+    person: "name4",
+    daysAgo: 3,
+    type: "note_image",
+    imageUrl: G.u2,
+    text: "viendo a @Julio explicar Stitch como si llevara meses con la herramienta",
+    reactions: [
+      { kind: "emoji", content: "😂" },
+      { kind: "emoji", content: "👏" },
+      { kind: "gif", content: G.carell, w: 358, h: 200 },
+    ],
+  },
+
+  // ─── 2 days ago — Thu ────────────────────────────────────────────────
+  {
+    person: "name3",
+    daysAgo: 2,
+    type: "reflection",
+    did: "- Sesión 5/5, la última.\n- Cerramos el bloque de noticias y empezamos a hablar del proyecto final.",
+    learned:
+      "Cerrar bien una serie pesa lo mismo que abrirla. No hay que ahorrarse el ritual.",
+    felt: "🎬",
+    reactions: [
+      { kind: "emoji", content: "🎬" },
+      { kind: "emoji", content: "🥲" },
+      { kind: "gif", content: G.crying, w: 200, h: 200 },
+    ],
+  },
+  {
+    person: "name4",
+    daysAgo: 2,
+    type: "reflection",
+    did: "- Me llevé las notas de las 5 sesiones a un único doc.\n- Empecé a anotar qué reusaría en la siguiente edición.",
+    learned:
+      "El programa siguiente se diseña con los apuntes del programa anterior, no desde cero.",
+    felt: "📚",
+    reactions: [
+      { kind: "emoji", content: "📚" },
+      { kind: "emoji", content: "✅" },
+    ],
+  },
+
+  // ─── 1 day ago — Fri, retro ──────────────────────────────────────────
+  {
+    person: "name3",
+    daysAgo: 1,
+    type: "reflection",
+    did: "- Retro con el grupo. Buena lista de lo que mantengo y lo que cambio.\n- @Julio y @Sam dejaron feedback honesto, justo el que hace falta.",
+    learned:
+      "La retro útil pasa cuando el grupo ya tiene confianza para decir lo incómodo.",
+    felt: "🧘",
+    reactions: [
+      { kind: "emoji", content: "🧘" },
+      { kind: "emoji", content: "💯" },
+      { kind: "emoji", content: "🙏" },
+    ],
+  },
+  {
+    person: "name4",
+    daysAgo: 1,
+    type: "reflection",
+    did: "- Pasé el doc final con el resumen de las 5 sesiones.\n- Etiqueté al grupo y al equipo extendido para que dejaran feedback.",
+    learned:
+      "Documentar al final >>> documentar nunca. (gracias @Sam por la frase, te la robo).",
+    felt: "✅",
+    reactions: [
+      { kind: "emoji", content: "✅" },
+      { kind: "emoji", content: "🙏" },
+      { kind: "gif", content: G.yes, w: 356, h: 200 },
+    ],
+  },
+
+  // ─── today — composer-only on Julio's side; nothing pre-seeded ──────
+];
+
+export function buildDemoDataTeam(today: string): {
+  cards: Card[];
+  reactions: Reaction[];
+} {
+  return buildFromSeeds([...SEEDS, ...SEEDS_TEAM_EXTRA], today);
 }
