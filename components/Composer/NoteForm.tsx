@@ -75,8 +75,8 @@ export function NoteForm({
       setError("Add a note or image.");
       return;
     }
-    // Fire synchronously inside the gesture handler — Firefox Android and
-    // iOS Safari both drop the haptic if it lands after an await.
+    // Sync inside the gesture handler — iOS Safari and Firefox Android
+    // drop haptics that land after an await.
     haptic.trigger("medium");
     try {
       const fd = new FormData();
@@ -104,10 +104,9 @@ export function NoteForm({
         result = await createNoteAction(fd);
       }
       if (result?.error) throw new Error(result.error);
-      // Run the flash hold and the refetch in parallel, then close.
-      // Awaiting invalidateQueries ensures the just-saved card is in
-      // the cache (and rendered in the day stack) by the time the form
-      // unmounts — no empty gap between form-close and card-in.
+      // Run the flash hold and the refetch in parallel — awaiting the
+      // invalidate ensures the just-saved card is in cache by the time
+      // the form unmounts, so there's no empty gap between close and pop-in.
       await Promise.all([flash(), invalidateCanvas(qc)]);
       onDone();
     } catch (err) {

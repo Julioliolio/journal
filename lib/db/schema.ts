@@ -90,11 +90,6 @@ export type NewCard = typeof cards.$inferInsert;
 export type Partners = typeof partners.$inferSelect;
 export type Reaction = typeof reactions.$inferSelect;
 export type NewReaction = typeof reactions.$inferInsert;
-export type PersonKey = "name1" | "name2" | "name3" | "name4";
-export const PERSON_KEYS: readonly PersonKey[] = [
-  "name1",
-  "name2",
-  "name3",
-  "name4",
-] as const;
+export const PERSON_KEYS = ["name1", "name2", "name3", "name4"] as const;
+export type PersonKey = (typeof PERSON_KEYS)[number];
 export type CardType = "note" | "image" | "note_image" | "reflection";
