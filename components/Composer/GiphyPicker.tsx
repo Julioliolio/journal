@@ -1,32 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { searchGiphyAction } from "@/app/actions/giphy";
 import { useEscapeKey } from "@/lib/hooks/useEscapeKey";
+import { EMOJI_GROUPS, type EmojiEntry } from "@/lib/emoji-data";
 import type { GiphyItem, PickerSelection } from "@/lib/giphy-types";
 
 export type { PickerSelection };
 
 type PickerTab = "emoji" | "stickers" | "gifs";
 
-const EMOJI_PALETTE = [
-  "❤️", "🧡", "💛", "💚", "💙", "💜", "🤍", "🖤",
-  "😀", "😄", "😅", "😂", "🤣", "😊", "🥹", "🥲",
-  "😍", "🥰", "😘", "😎", "🤩", "🥳", "😭", "🤗",
-  "🙌", "👏", "👍", "👎", "🙏", "💪", "🤝", "🫶",
-  "🔥", "✨", "💯", "⭐", "🎉", "🎊", "🌈", "☀️",
-  "🌸", "🌻", "🌿", "🍀", "🍂", "🍎", "🍑", "🍓",
-  "🍕", "🍔", "🍰", "🍪", "🍫", "☕", "🍵", "🍷",
-  "🐶", "🐱", "🦊", "🐻", "🐼", "🦄", "🐝", "🐢",
-  "🚀", "💌", "🎁", "📚", "🎵", "🎨", "🏔️", "🌊",
-  "👀", "💀", "🤔", "😳", "😬", "😮", "🤯", "😱",
-  "👻", "👋", "🫡", "🫠", "🫥", "🤌", "🤞", "✌️",
-  "💔", "❣️", "💕", "💞", "💖", "💘", "💝", "💟",
-];
-
 const PAGE_SIZE = 24;
+const EMOJI_SEARCH_LIMIT = 240;
 
 export function GiphyPicker({
   onPicked,
@@ -125,12 +112,29 @@ export function GiphyPicker({
 
   useEscapeKey(onClose);
 
-  const filteredEmojis = (() => {
-    if (!isEmoji) return EMOJI_PALETTE;
-    const q = query.trim();
-    if (!q) return EMOJI_PALETTE;
-    return EMOJI_PALETTE.filter((e) => e.includes(q));
-  })();
+  // Flat list across all groups, used by search.
+  const allEmojis = useMemo(() => EMOJI_GROUPS.flatMap((g) => g.e), []);
+
+  const emojiQuery = isEmoji ? query.trim().toLowerCase() : "";
+  const emojiMatches = useMemo<EmojiEntry[]>(() => {
+    if (!isEmoji || !emojiQuery) return [];
+    const q = emojiQuery;
+    const out: EmojiEntry[] = [];
+    // Direct glyph match (e.g. user pasted an emoji into search): exact hit.
+    for (const em of allEmojis) {
+      if (em.e === query.trim()) out.push(em);
+    }
+    // Then name/keyword matches, prefix-prioritized.
+    const prefix: EmojiEntry[] = [];
+    const contains: EmojiEntry[] = [];
+    for (const em of allEmojis) {
+      if (em.e === query.trim()) continue;
+      if (em.n.startsWith(q)) prefix.push(em);
+      else if (em.n.includes(q) || em.k.includes(q)) contains.push(em);
+      if (prefix.length + contains.length >= EMOJI_SEARCH_LIMIT) break;
+    }
+    return out.concat(prefix, contains).slice(0, EMOJI_SEARCH_LIMIT);
+  }, [isEmoji, emojiQuery, query, allEmojis]);
 
   if (typeof document === "undefined") return null;
 
@@ -175,18 +179,20 @@ export function GiphyPicker({
               gifs
             </button>
           </div>
-          {!isEmoji && (
-            <input
-              autoFocus
-              type="text"
-              className="giphy-search"
-              placeholder={
-                tab === "stickers" ? "search stickers…" : "search gifs…"
-              }
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-            />
-          )}
+          <input
+            autoFocus
+            type="text"
+            className="giphy-search"
+            placeholder={
+              isEmoji
+                ? "search emoji…"
+                : tab === "stickers"
+                  ? "search stickers…"
+                  : "search gifs…"
+            }
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
           <button
             type="button"
             className="pill pill-ghost"
@@ -197,20 +203,47 @@ export function GiphyPicker({
         </header>
         {error && <p className="compose-error giphy-error">{error}</p>}
         {isEmoji ? (
-          <div className="emoji-grid">
-            {filteredEmojis.map((e) => (
-              <button
-                key={e}
-                type="button"
-                className="emoji-tile"
-                onClick={() => onPicked({ kind: "emoji", emoji: e })}
-                aria-label={`react with ${e}`}
-              >
-                {e}
-              </button>
-            ))}
-            {filteredEmojis.length === 0 && (
-              <p className="giphy-empty">no match.</p>
+          <div className="emoji-scroll">
+            {emojiQuery ? (
+              <div className="emoji-grid">
+                {emojiMatches.map((em) => (
+                  <button
+                    key={em.e + em.n}
+                    type="button"
+                    className="emoji-tile"
+                    title={em.n}
+                    onClick={() => onPicked({ kind: "emoji", emoji: em.e })}
+                    aria-label={em.n}
+                  >
+                    {em.e}
+                  </button>
+                ))}
+                {emojiMatches.length === 0 && (
+                  <p className="giphy-empty">
+                    no emoji for “{query.trim()}”.
+                  </p>
+                )}
+              </div>
+            ) : (
+              EMOJI_GROUPS.map((group) => (
+                <section key={group.n} className="emoji-group">
+                  <h3 className="emoji-group-heading">{group.n}</h3>
+                  <div className="emoji-grid">
+                    {group.e.map((em) => (
+                      <button
+                        key={em.e + em.n}
+                        type="button"
+                        className="emoji-tile"
+                        title={em.n}
+                        onClick={() => onPicked({ kind: "emoji", emoji: em.e })}
+                        aria-label={em.n}
+                      >
+                        {em.e}
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              ))
             )}
           </div>
         ) : (

@@ -10,17 +10,21 @@ import { GiphyPicker } from "./GiphyPicker";
 export function FeltImagePicker({
   url,
   onChange,
+  onEmojiPick,
   disabled,
 }: {
   /** Currently-selected media URL (object URL for local files, embed URL for Giphy), or null. */
   url: string | null;
   /** Called with the preview URL and the raw File (null for Giphy/clear). */
   onChange: (url: string | null, file?: File | null) => void;
+  /** Called when the user picks an emoji from the picker — typically the
+   *  parent form inserts it into the felt textarea at the cursor. */
+  onEmojiPick?: (emoji: string) => void;
   disabled?: boolean;
 }) {
   const [compressing, setCompressing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerTab, setPickerTab] = useState<"gifs" | "emoji" | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   // Track the object URL we created so we can revoke it on replacement/unmount.
   const objectUrlRef = useRef<string | null>(null);
@@ -51,13 +55,17 @@ export function FeltImagePicker({
   }
 
   function pickFromGiphy(picked: PickerSelection) {
-    if (picked.kind !== "gif") return;
+    if (picked.kind === "emoji") {
+      onEmojiPick?.(picked.emoji);
+      setPickerTab(null);
+      return;
+    }
     if (objectUrlRef.current) {
       URL.revokeObjectURL(objectUrlRef.current);
       objectUrlRef.current = null;
     }
     onChange(picked.embedUrl, null);
-    setPickerOpen(false);
+    setPickerTab(null);
   }
 
   const busy = compressing;
@@ -97,10 +105,21 @@ export function FeltImagePicker({
           type="button"
           className="file-pill"
           disabled={disabled || busy}
-          onClick={() => setPickerOpen(true)}
+          onClick={() => setPickerTab("gifs")}
         >
           search GIPHY
         </button>
+        {onEmojiPick && (
+          <button
+            type="button"
+            className="file-pill"
+            disabled={disabled || busy}
+            onClick={() => setPickerTab("emoji")}
+            aria-label="insert emoji"
+          >
+            emoji
+          </button>
+        )}
         {url && !busy && (
           <button
             type="button"
@@ -113,11 +132,11 @@ export function FeltImagePicker({
         )}
       </div>
       {error && <p className="compose-error">{error}</p>}
-      {pickerOpen && (
+      {pickerTab && (
         <GiphyPicker
-          defaultTab="gifs"
+          defaultTab={pickerTab}
           onPicked={pickFromGiphy}
-          onClose={() => setPickerOpen(false)}
+          onClose={() => setPickerTab(null)}
         />
       )}
     </div>

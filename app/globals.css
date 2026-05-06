@@ -2733,14 +2733,43 @@ textarea {
   flex-wrap: nowrap;
 }
 
-/* Emoji grid: dense, tap-friendly tiles, no GIPHY chrome. */
-.emoji-grid {
+/* Emoji picker: a scrollable column with category sections; each section
+   owns a dense, tap-friendly grid. Search collapses everything into a
+   single grid with no headings. */
+.emoji-scroll {
   flex: 1;
+  overflow-y: auto;
+  padding: 4px 14px 12px;
+}
+
+.emoji-group + .emoji-group {
+  margin-top: 6px;
+}
+
+.emoji-group-heading {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0;
+  padding: 10px 0 6px;
+  background: var(--color-paper);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-ink-mute);
+}
+
+.emoji-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
   gap: 4px;
-  padding: 12px 14px;
-  overflow-y: auto;
+}
+
+/* When the grid is the lone child of the scroller (search results), give it
+   a touch of top padding so it doesn't kiss the search bar. */
+.emoji-scroll > .emoji-grid {
+  padding-top: 8px;
 }
 
 .emoji-tile {

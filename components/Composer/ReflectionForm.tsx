@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useWebHaptics } from "web-haptics/react";
 
 import { createReflectionAction } from "@/app/actions/cards";
 import { AutoGrowTextarea } from "@/components/AutoGrowTextarea";
 import { useSubmitMorph } from "@/lib/hooks/useSubmitMorph";
+import { insertIntoNamedField } from "@/lib/insertText";
 import { invalidateCanvas } from "@/lib/queries";
 
 import { FeltImagePicker } from "./FeltImagePicker";
@@ -22,6 +23,7 @@ export function ReflectionForm({
   const [error, setError] = useState<string | null>(null);
   const [feltImageUrl, setFeltImageUrl] = useState<string | null>(null);
   const [feltFile, setFeltFile] = useState<File | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const { saved, flash } = useSubmitMorph();
   const qc = useQueryClient();
   const haptic = useWebHaptics();
@@ -29,6 +31,7 @@ export function ReflectionForm({
 
   return (
     <form
+      ref={formRef}
       className="compose compose-dark"
       action={(fd) => {
         fd.set("date", today);
@@ -66,6 +69,9 @@ export function ReflectionForm({
         <FeltImagePicker
           url={feltImageUrl}
           onChange={(url, file) => { setFeltImageUrl(url); setFeltFile(file ?? null); }}
+          onEmojiPick={(emoji) =>
+            insertIntoNamedField(formRef.current, "felt", emoji)
+          }
           disabled={busy}
         />
       </Field>

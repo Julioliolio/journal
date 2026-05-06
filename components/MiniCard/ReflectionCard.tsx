@@ -6,6 +6,7 @@ import { AutoGrowTextarea } from "@/components/AutoGrowTextarea";
 import { FeltImagePicker } from "@/components/Composer/FeltImagePicker";
 import { useSubmitMorph } from "@/lib/hooks/useSubmitMorph";
 import { isVideoUrl, processMedia } from "@/lib/image";
+import { insertIntoNamedField } from "@/lib/insertText";
 import type { Card, Reaction } from "@/lib/db/schema";
 
 import { EditMenu, useUpdateCard } from "./EditMenu";
@@ -34,6 +35,7 @@ export function ReflectionCard({
   const dragDepth = useRef(0);
   // Object URL created during drag-drop; revoke when replaced or on unmount.
   const dropObjectUrlRef = useRef<string | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const update = useUpdateCard();
   const { saved, flash } = useSubmitMorph();
 
@@ -87,6 +89,7 @@ export function ReflectionCard({
         }}
       >
         <form
+          ref={formRef}
           className="edit-inline"
           action={async (fd) => {
             fd.set("id", card.id);
@@ -128,6 +131,9 @@ export function ReflectionCard({
                 setFeltImageUrl(url);
                 setFeltFile(file ?? null);
               }}
+              onEmojiPick={(emoji) =>
+                insertIntoNamedField(formRef.current, "felt", emoji)
+              }
               disabled={saved || dropping}
             />
           </Field>
