@@ -1,8 +1,7 @@
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
-  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -10,7 +9,6 @@ import {
 } from "react";
 
 import { getCanvasDataAction, type CanvasData } from "@/app/actions/data";
-import { todayISO } from "@/lib/date";
 import {
   PERSON_KEYS,
   type Card,
@@ -18,8 +16,11 @@ import {
   type PersonKey,
   type Reaction,
 } from "@/lib/db/schema";
+import { useCanvasSubscription } from "@/lib/hooks/useCanvasSubscription";
 import { useIsMobile } from "@/lib/hooks/useIsMobile";
-import { CANVAS_KEY, invalidateCanvas } from "@/lib/queries";
+import { useReactionsByCardId } from "@/lib/hooks/useReactionsByCardId";
+import { useTodayTick } from "@/lib/hooks/useTodayTick";
+import { CANVAS_KEY } from "@/lib/queries";
 
 import { Half } from "./Half";
 import { ThemeToggle } from "./ThemeToggle";
@@ -37,19 +38,7 @@ export function Canvas({
   /** Full /login/<token> URL — only passed for authenticated authors. */
   inviteUrl?: string | null;
 }) {
-  const queryClient = useQueryClient();
-
-  useEffect(() => {
-    const es = new EventSource("/api/events");
-    const refetch = () => invalidateCanvas(queryClient);
-    es.onmessage = refetch;
-    let connected = false;
-    es.onopen = () => {
-      if (connected) refetch();
-      connected = true;
-    };
-    return () => es.close();
-  }, [queryClient]);
+  useCanvasSubscription({ refetchOnReconnect: true });
 
   const { data } = useQuery({
     queryKey: CANVAS_KEY,
@@ -62,28 +51,9 @@ export function Canvas({
   const partners = data.partners ?? initialData.partners;
   const currentUser = data.currentUser ?? initialData.currentUser;
   const cards = data.cards;
-  const reactions = data.reactions;
 
-  const reactionsByCardId = useMemo(() => {
-    const map = new Map<string, Reaction[]>();
-    for (const r of reactions) {
-      const arr = map.get(r.cardId);
-      if (arr) arr.push(r);
-      else map.set(r.cardId, [r]);
-    }
-    return map;
-  }, [reactions]);
-
-  const [today, setToday] = useState(() => todayISO());
-  useEffect(() => {
-    const id = setInterval(() => {
-      setToday((prev) => {
-        const next = todayISO();
-        return next === prev ? prev : next;
-      });
-    }, 60_000);
-    return () => clearInterval(id);
-  }, []);
+  const reactionsByCardId = useReactionsByCardId(data.reactions);
+  const today = useTodayTick();
 
   const people: Person[] = useMemo(() => {
     return PERSON_KEYS.map((key) => ({
@@ -135,24 +105,9 @@ export function DesktopCanvas({
   today: string;
   reactionsByCardId: Map<string, Reaction[]>;
 }) {
-  const [open, setOpen] = useState<Set<PersonKey>>(
-    () => new Set(people.map((p) => p.key)),
-  );
-
-  // Reconcile open set when the joined-people list changes (e.g. a new
-  // boss joins via the invite link). New people default to open; ones
-  // that disappear get pruned.
-  const knownKeys = people.map((p) => p.key).join("|");
-  const [lastKnown, setLastKnown] = useState(knownKeys);
-  if (knownKeys !== lastKnown) {
-    setLastKnown(knownKeys);
-    setOpen((prev) => {
-      const next = new Set(prev);
-      for (const p of people) if (!next.has(p.key)) next.add(p.key);
-      for (const k of next) if (!people.find((p) => p.key === k)) next.delete(k);
-      return next;
-    });
-  }
+  // Track *closed* keys, not open ones: newcomers are open by default and
+  // departing keys self-prune through the membership filter below.
+  const [closed, setClosed] = useState<Set<PersonKey>>(() => new Set());
 
   const pillRefs = useRef<Map<PersonKey, HTMLElement>>(new Map());
   const columnRefs = useRef<Map<PersonKey, HTMLElement>>(new Map());
@@ -177,7 +132,7 @@ export function DesktopCanvas({
       .forEach((card) => {
         pendingCardWidths.current.set(card, card.getBoundingClientRect().width);
       });
-    setOpen((prev) => {
+    setClosed((prev) => {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key);
       else next.add(key);
@@ -310,8 +265,8 @@ export function DesktopCanvas({
     };
   }
 
-  const openPeople = people.filter((p) => open.has(p.key));
-  const closedPeople = people.filter((p) => !open.has(p.key));
+  const openPeople = people.filter((p) => !closed.has(p.key));
+  const closedPeople = people.filter((p) => closed.has(p.key));
 
   return (
     <>

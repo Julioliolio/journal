@@ -13,6 +13,7 @@ import {
 import { trackMyReaction, getMyReactionExpiry } from "@/lib/myReactions";
 import { GiphyPicker } from "@/components/Composer/GiphyPicker";
 import { useEscapeKey } from "@/lib/hooks/useEscapeKey";
+import { useIsMobile } from "@/lib/hooks/useIsMobile";
 import type { PickerSelection } from "@/lib/giphy-types";
 import type { Reaction } from "@/lib/db/schema";
 import {
@@ -20,6 +21,8 @@ import {
   replaceReaction,
   spliceReaction,
 } from "@/lib/queries";
+
+import { SmilePlusIcon } from "../icons";
 
 const LONG_PRESS_MS = 380;
 const LONG_PRESS_TRAVEL = 6;
@@ -42,6 +45,7 @@ export function Reactions({
   const rootRef = useRef<HTMLDivElement>(null);
   const qc = useQueryClient();
   const haptic = useWebHaptics();
+  const isMobile = useIsMobile();
 
   const overflow = reactions.length - VISIBLE_LIMIT;
   const visibleReactions =
@@ -51,7 +55,7 @@ export function Reactions({
   // matches the desktop hover behaviour without making the button always
   // visible. CSS :hover sticks after a tap, so we drive this with state.
   useEffect(() => {
-    if (!canAdd) return;
+    if (!canAdd || !isMobile) return;
     const root = rootRef.current;
     if (!root) return;
     const card = root.closest<HTMLElement>(".card-shell");
@@ -98,7 +102,7 @@ export function Reactions({
       card.removeEventListener("touchend", cancel);
       card.removeEventListener("touchcancel", cancel);
     };
-  }, [canAdd]);
+  }, [canAdd, isMobile]);
 
   useEffect(() => {
     if (!revealed) return;
@@ -380,27 +384,4 @@ function ReactionPreview({
 
 function makeTempId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
-
-function SmilePlusIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M22 11v1a10 10 0 1 1-9-10" />
-      <path d="M8 14s1.5 2 4 2 4-2 4-2" />
-      <line x1="9" x2="9.01" y1="9" y2="9" />
-      <line x1="15" x2="15.01" y1="9" y2="9" />
-      <path d="M16 5h6" />
-      <path d="M19 2v6" />
-    </svg>
-  );
 }

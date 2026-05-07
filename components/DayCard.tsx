@@ -17,7 +17,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { useState, useSyncExternalStore } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useWebHaptics } from "web-haptics/react";
 
@@ -116,10 +116,13 @@ function DayBody({
     }),
   );
 
-  const byId = new Map(cards.map((c) => [c.id, c]));
-  const items = orderedIds
-    .map((id) => byId.get(id))
-    .filter((c): c is Card => Boolean(c));
+  const { byId, items } = useMemo(() => {
+    const byId = new Map(cards.map((c) => [c.id, c]));
+    const items = orderedIds
+      .map((id) => byId.get(id))
+      .filter((c): c is Card => Boolean(c));
+    return { byId, items };
+  }, [cards, orderedIds]);
 
   if (items.length === 0) {
     return <EmptyHint isToday={isToday} isOwn={isOwn} />;

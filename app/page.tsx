@@ -9,7 +9,12 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const partners = await getPartners();
+  const [partners, currentUser, cards, reactions] = await Promise.all([
+    getPartners(),
+    getCurrentUser(),
+    getAllCards(),
+    getAllReactions(),
+  ]);
 
   // Public landing for visitors who arrive before the journal exists yet.
   if (!partners) {
@@ -22,12 +27,6 @@ export default async function Home() {
       </main>
     );
   }
-
-  const [currentUser, cards, reactions] = await Promise.all([
-    getCurrentUser(),
-    getAllCards(),
-    getAllReactions(),
-  ]);
 
   // Only authors get the secret invite URL embedded — they already know it.
   const token = process.env.AUTHOR_LINK_TOKEN;

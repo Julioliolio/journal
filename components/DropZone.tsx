@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { createImageAction } from "@/app/actions/cards";
@@ -26,27 +26,30 @@ export function DropZone({
   const ref = useRef<HTMLDivElement>(null);
   const qc = useQueryClient();
 
-  async function ingest(file: File) {
-    try {
-      setStatus({ kind: "processing" });
-      const processed = await processImage(file);
-      setStatus({ kind: "uploading" });
-      const createFd = new FormData();
-      createFd.set("date", today);
-      createFd.set("clientToday", today);
-      createFd.set("imageFile", processed);
-      const result = await createImageAction(createFd);
-      if (result?.error) throw new Error(result.error);
-      // Hold the "uploading…" indicator until the new card is in cache
-      // so it doesn't disappear before the card pops in.
-      await invalidateCanvas(qc);
-      setStatus({ kind: "idle" });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Upload failed.";
-      setStatus({ kind: "error", message });
-      setTimeout(() => setStatus({ kind: "idle" }), 3000);
-    }
-  }
+  const ingest = useCallback(
+    async (file: File) => {
+      try {
+        setStatus({ kind: "processing" });
+        const processed = await processImage(file);
+        setStatus({ kind: "uploading" });
+        const createFd = new FormData();
+        createFd.set("date", today);
+        createFd.set("clientToday", today);
+        createFd.set("imageFile", processed);
+        const result = await createImageAction(createFd);
+        if (result?.error) throw new Error(result.error);
+        // Hold the "uploading…" indicator until the new card is in cache
+        // so it doesn't disappear before the card pops in.
+        await invalidateCanvas(qc);
+        setStatus({ kind: "idle" });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Upload failed.";
+        setStatus({ kind: "error", message });
+        setTimeout(() => setStatus({ kind: "idle" }), 3000);
+      }
+    },
+    [today, qc],
+  );
 
   useEffect(() => {
     const node = ref.current;
@@ -67,8 +70,7 @@ export function DropZone({
     };
     node.addEventListener("paste", handler);
     return () => node.removeEventListener("paste", handler);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [today]);
+  }, [ingest]);
 
   return (
     <div

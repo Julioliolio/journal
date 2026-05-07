@@ -38,17 +38,12 @@ export function ReflectionForm({
         fd.set("clientToday", today);
         if (feltFile) fd.set("feltImageFile", feltFile);
         else if (feltImageUrl) fd.set("feltImageUrl", feltImageUrl);
-        // Fire synchronously inside the gesture handler — Firefox Android
-        // and iOS Safari both drop the haptic if it lands after an await.
+        // Sync inside the gesture handler — iOS Safari and Firefox
+        // Android drop haptics that land after an await.
         haptic.trigger("medium");
         startTransition(async () => {
           try {
             await createReflectionAction(fd);
-            // Run the flash hold and the refetch in parallel, then close.
-            // Awaiting invalidateQueries ensures the just-saved card is
-            // in the cache (and rendered in the day stack) by the time
-            // the form unmounts — no empty gap between form-close and
-            // card-in.
             await Promise.all([flash(), invalidateCanvas(qc)]);
             onDone();
           } catch (err) {

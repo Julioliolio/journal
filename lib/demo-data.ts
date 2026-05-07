@@ -484,7 +484,14 @@ function buildFromSeeds(seeds: Seed[], today: string): {
 
   let cardCounter = 0;
   let reactionCounter = 0;
-  const baseTime = Date.now();
+  // Derive from `today` so the same input gives the same timestamps —
+  // memoization on today is meaningful, and the cutoff filter that
+  // separates pre-baked seeds from session-created cards stays stable.
+  const baseTime = Date.UTC(
+    Number(today.slice(0, 4)),
+    Number(today.slice(5, 7)) - 1,
+    Number(today.slice(8, 10)),
+  );
 
   for (const [key, list] of grouped) {
     const [, date] = key.split("__");
