@@ -665,8 +665,10 @@ textarea {
 
 .composer-slot {
   display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 220ms ease;
+  /* Reserve the open size at idle. Hovering today's card only fades the
+     pills in via opacity — the card's height stays constant so the
+     multi-column masonry doesn't snap siblings across breakpoints. */
+  grid-template-rows: 1fr;
 }
 
 .composer-active {
@@ -676,16 +678,13 @@ textarea {
 .composer-slot > .composer-pills {
   overflow: clip;
   overflow-clip-margin: 16px;
-  /* Without min-height: 0 the grid track inherits the pills' min-content
-     size and refuses to collapse to 0fr. */
   min-height: 0;
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  padding-top: 0;
-  padding-bottom: 0;
+  padding-top: 4px;
+  padding-bottom: 12px;
   opacity: 1;
-  transition: padding-top 220ms ease, padding-bottom 220ms ease;
 }
 
 /* Each pill fades in with a small per-index delay so the reveal feels
@@ -695,17 +694,6 @@ textarea {
    fires immediately with the bouncy curve and no inherited delay. */
 .composer-slot > .composer-pills > * {
   opacity: 0;
-}
-
-.day-card:hover .composer-slot,
-.day-card:focus-within .composer-slot {
-  grid-template-rows: 1fr;
-}
-
-.day-card:hover .composer-slot > .composer-pills,
-.day-card:focus-within .composer-slot > .composer-pills {
-  padding-top: 4px;
-  padding-bottom: 12px;
 }
 
 .day-card:hover .composer-slot > .composer-pills > *,
