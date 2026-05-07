@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 
 import { AutoGrowTextarea } from "@/components/AutoGrowTextarea";
 import { FeltImagePicker } from "@/components/Composer/FeltImagePicker";
+import { formatCardTime } from "@/lib/date";
 import { useSubmitMorph } from "@/lib/hooks/useSubmitMorph";
 import { isVideoUrl, processMedia } from "@/lib/image";
 import { insertIntoNamedField } from "@/lib/insertText";
@@ -178,6 +179,9 @@ export function ReflectionCard({
 
   return (
     <div className="card-shell card-dark" data-fresh={isFresh || undefined}>
+      <time className="card-time" dateTime={card.createdAt.toISOString()}>
+        {formatCardTime(card.createdAt)}
+      </time>
       <Section label="did" value={card.reflectionDid} />
       <Section label="learned" value={card.reflectionLearned} />
       <Section

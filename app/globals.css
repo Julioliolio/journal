@@ -439,6 +439,31 @@ textarea {
   animation: card-enter 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+.card-time {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--color-ink-mute);
+  z-index: 2;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Variant for image cards: floats over the image, so it gets a subtle
+   pill background to stay legible on any photo. */
+.card-time-overlay {
+  top: 8px;
+  right: 8px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.42);
+  color: rgba(255, 255, 255, 0.86);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
 .card-light {
   background: var(--color-paper);
   color: var(--color-ink);

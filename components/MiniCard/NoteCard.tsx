@@ -5,6 +5,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import { AutoGrowTextarea } from "@/components/AutoGrowTextarea";
+import { formatCardTime } from "@/lib/date";
 import { useSubmitMorph } from "@/lib/hooks/useSubmitMorph";
 import type { Card, Reaction } from "@/lib/db/schema";
 
@@ -80,6 +81,9 @@ export function NoteCard({
 
   return (
     <div className="card-shell card-light" data-fresh={isFresh || undefined}>
+      <time className="card-time" dateTime={card.createdAt.toISOString()}>
+        {formatCardTime(card.createdAt)}
+      </time>
       <div className="markdown">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>
           {card.text ?? ""}

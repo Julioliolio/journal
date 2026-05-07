@@ -5,6 +5,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import { AutoGrowTextarea } from "@/components/AutoGrowTextarea";
+import { formatCardTime } from "@/lib/date";
 import { useSubmitMorph } from "@/lib/hooks/useSubmitMorph";
 import type { Card, Reaction } from "@/lib/db/schema";
 
@@ -98,6 +99,12 @@ export function NoteImageCard({
           // eslint-disable-next-line @next/next/no-img-element
           <img src={card.imageUrl} alt="" loading="lazy" />
         )}
+        <time
+          className="card-time card-time-overlay"
+          dateTime={card.createdAt.toISOString()}
+        >
+          {formatCardTime(card.createdAt)}
+        </time>
         {!card.text && (
           <div className="card-image-reactions-wrap">{reactionsEl}</div>
         )}

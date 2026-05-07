@@ -35,6 +35,13 @@ export function formatDayHeader(dateISO: string): string {
 }
 
 /**
+ * "9:42 pm" — small lowercase clock label for individual cards.
+ */
+export function formatCardTime(date: Date): string {
+  return format(date, "h:mm aaa");
+}
+
+/**
  * Loose server-side bound: accepts dates within ±1 day of UTC today
  * (covers any TZ offset). Past-day backdating is rejected by also
  * requiring the date to equal the client-supplied `today` on creation.
