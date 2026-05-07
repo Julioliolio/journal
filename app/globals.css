@@ -133,6 +133,7 @@ textarea {
 
 .half-inner {
   padding: 0 16px 96px;
+  transition: padding-top 200ms ease;
 }
 
 .half:only-child .half-inner {
@@ -1278,7 +1279,7 @@ textarea {
 .dropzone-status {
   position: absolute;
   top: 14px;
-  right: 14px;
+  right: 16px;
   background: var(--color-paper);
   border: 1px solid var(--color-line);
   padding: 6px 12px;
@@ -1289,6 +1290,12 @@ textarea {
   animation: card-enter 180ms ease-out both;
   overflow: hidden;
   isolation: isolate;
+}
+
+/* Reserve room at the top of the card column while an upload is in flight
+   so the status pill never lands on the first day-card's content. */
+.dropzone-wrap[data-upload="active"] .half-inner {
+  padding-top: 52px;
 }
 
 /* Sweeping shimmer overlay while an image is being processed/uploaded.

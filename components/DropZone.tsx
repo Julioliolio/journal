@@ -72,11 +72,17 @@ export function DropZone({
     return () => node.removeEventListener("paste", handler);
   }, [ingest]);
 
+  const showStatusBar =
+    status.kind === "processing" ||
+    status.kind === "uploading" ||
+    status.kind === "error";
+
   return (
     <div
       ref={ref}
       tabIndex={0}
       className="dropzone-wrap"
+      data-upload={showStatusBar ? "active" : undefined}
       onDragEnter={(event) => {
         if (event.dataTransfer?.types.includes("Files")) {
           event.preventDefault();
