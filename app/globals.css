@@ -2719,6 +2719,25 @@ textarea {
   position: relative;
 }
 
+/* Button wrapper around the image so clicking enlarges it (mirrors the
+   reaction chip behaviour). Resets all button chrome so the image still
+   fills the card edge-to-edge. */
+.card-image-zoom {
+  display: block;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.card-image-zoom:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: -2px;
+}
+
 .card-image-reactions-wrap {
   position: absolute;
   right: 8px;

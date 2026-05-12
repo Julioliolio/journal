@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import { AutoGrowTextarea } from "@/components/AutoGrowTextarea";
 import { formatCardTime } from "@/lib/date";
+import { useEscapeKey } from "@/lib/hooks/useEscapeKey";
 import { useSubmitMorph } from "@/lib/hooks/useSubmitMorph";
 import type { Card, Reaction } from "@/lib/db/schema";
 
@@ -26,6 +28,7 @@ export function NoteImageCard({
   isFresh?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
+  const [enlarged, setEnlarged] = useState(false);
   const update = useUpdateCard();
   const { saved, flash } = useSubmitMorph();
 
@@ -96,8 +99,18 @@ export function NoteImageCard({
     <div className="card-shell card-image" data-fresh={isFresh || undefined}>
       <div className="card-image-figure">
         {card.imageUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={card.imageUrl} alt="" loading="lazy" />
+          <button
+            type="button"
+            className="card-image-zoom"
+            onClick={(e) => {
+              e.stopPropagation();
+              setEnlarged(true);
+            }}
+            aria-label="enlarge image"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={card.imageUrl} alt="" loading="lazy" />
+          </button>
         )}
         <time
           className="card-time card-time-overlay"
@@ -122,6 +135,33 @@ export function NoteImageCard({
       {isOwn && editable && (
         <EditMenu card={card} onEdit={() => setEditing(true)} inset />
       )}
+      {enlarged && card.imageUrl && (
+        <ImagePreview src={card.imageUrl} onClose={() => setEnlarged(false)} />
+      )}
     </div>
+  );
+}
+
+function ImagePreview({
+  src,
+  onClose,
+}: {
+  src: string;
+  onClose: () => void;
+}) {
+  useEscapeKey(onClose);
+  if (typeof document === "undefined") return null;
+  return createPortal(
+    <div
+      className="reaction-preview-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-label="enlarged image"
+      onClick={onClose}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img className="reaction-preview-img" src={src} alt="" />
+    </div>,
+    document.body,
   );
 }
