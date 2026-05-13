@@ -108,3 +108,22 @@ export function MoonIcon({
     </svg>
   );
 }
+
+export function LeafIcon({
+  size = 14,
+  className = "cast-toggle-leaf",
+}: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      strokeWidth="2"
+      className={className}
+      {...baseProps}
+    >
+      <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19.8 2c1 3 .5 5-2 5.5C18 11.8 20 16.8 16 19c-1.7.9-4 .8-5-1Z" />
+      <path d="M2 21c0-3 1.85-5.36 5.08-6" />
+    </svg>
+  );
+}

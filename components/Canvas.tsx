@@ -22,6 +22,8 @@ import { useReactionsByCardId } from "@/lib/hooks/useReactionsByCardId";
 import { useTodayTick } from "@/lib/hooks/useTodayTick";
 import { CANVAS_KEY } from "@/lib/queries";
 
+import { CastOverlay } from "./CastOverlay";
+import { CastToggle } from "./CastToggle";
 import { Half } from "./Half";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -68,10 +70,12 @@ export function Canvas({
 
   return (
     <div className="canvas-root">
+      <CastOverlay />
       <div className="app-toolbar">
         {currentUser && hasOpenSeats && inviteUrl && (
           <InviteButton inviteUrl={inviteUrl} />
         )}
+        <CastToggle />
         <ThemeToggle />
       </div>
 

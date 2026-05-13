@@ -29,7 +29,7 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "(function(){try{var t=localStorage.getItem('theme');if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}if(t==='dark')document.documentElement.dataset.theme='dark';}catch(e){}})();",
+              "(function(){try{var t=localStorage.getItem('theme');if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}if(t==='dark')document.documentElement.dataset.theme='dark';if(localStorage.getItem('cast')==='on')document.documentElement.dataset.cast='on';}catch(e){}})();",
           }}
         />
       </head>

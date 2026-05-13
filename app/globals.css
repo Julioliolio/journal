@@ -1,20 +1,28 @@
 @import "tailwindcss";
 
 @theme {
-  --color-canvas: #efece6;
-  --color-day: #f6f4ef;
-  --color-paper: #fcfaf4;
-  --color-paper-soft: rgba(252, 250, 244, 0.55);
-  --color-ink: #1b1a18;
+  /* Warm cream canvas + true-black ink for high-contrast print feel.
+     Surfaces nest within a few percent of canvas so structure reads
+     through proximity, not heavy fills. */
+  --color-canvas: #ebe5d3;
+  --color-day: #f1ebd8;
+  --color-paper: #f6f0dd;
+  --color-paper-soft: rgba(246, 240, 221, 0.55);
+  --color-ink: #000000;
   --color-ink-soft: #6b645b;
   --color-ink-mute: #a8a094;
-  --color-line: #e8e3da;
-  --color-line-soft: rgba(27, 26, 24, 0.06);
-  --color-night: #1b1a18;
-  --color-night-soft: #2a2825;
-  --color-night-ink: #f1ede4;
-  --color-night-ink-soft: rgba(241, 237, 228, 0.62);
-  --color-night-line: rgba(241, 237, 228, 0.12);
+  --color-line: #dcd5c2;
+  --color-line-soft: rgba(0, 0, 0, 0.06);
+  /* Reflection cards sit just a touch darker than the cream canvas —
+     mirroring how, in dark mode, they sit just a touch lighter than the
+     near-black canvas. Text + overlays derive from --color-night-tint so
+     they flip dark-on-light here and light-on-dark in the dark override. */
+  --color-night: #d9d2bf;
+  --color-night-soft: #e1dac8;
+  --color-night-tint: 0 0 0;
+  --color-night-ink: rgb(var(--color-night-tint));
+  --color-night-ink-soft: rgb(var(--color-night-tint) / 0.62);
+  --color-night-line: rgb(var(--color-night-tint) / 0.12);
 
   --radius-day: 22px;
   --radius-mini: 14px;
@@ -544,7 +552,7 @@ textarea {
 }
 
 .card-dark .markdown code {
-  background: rgba(241, 237, 228, 0.12);
+  background: rgb(var(--color-night-tint) / 0.12);
 }
 
 .markdown strong {
@@ -575,7 +583,7 @@ textarea {
   margin-top: 10px;
   border-radius: 10px;
   overflow: hidden;
-  background: rgba(241, 237, 228, 0.04);
+  background: rgb(var(--color-night-tint) / 0.04);
 }
 
 .reflection-image img,
@@ -602,7 +610,7 @@ textarea {
 .felt-picker-preview {
   border-radius: 10px;
   overflow: hidden;
-  background: rgba(241, 237, 228, 0.04);
+  background: rgb(var(--color-night-tint) / 0.04);
 }
 
 .felt-picker-preview img,
@@ -637,7 +645,7 @@ textarea {
 }
 
 .felt-drop[data-dragging] {
-  outline: 2px dashed rgba(241, 237, 228, 0.32);
+  outline: 2px dashed rgb(var(--color-night-tint) / 0.32);
   outline-offset: -6px;
 }
 
@@ -667,17 +675,17 @@ textarea {
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--color-night-ink);
-  background: rgba(241, 237, 228, 0.08);
+  background: rgb(var(--color-night-tint) / 0.08);
   padding: 8px 14px;
   border-radius: 999px;
-  border: 1px solid rgba(241, 237, 228, 0.18);
+  border: 1px solid rgb(var(--color-night-tint) / 0.18);
 }
 
 .felt-drop-status {
   position: absolute;
   top: 10px;
   right: 10px;
-  background: rgba(241, 237, 228, 0.08);
+  background: rgb(var(--color-night-tint) / 0.08);
   border: 1px solid var(--color-night-line);
   padding: 4px 10px;
   border-radius: 999px;
@@ -859,7 +867,7 @@ textarea {
 
 /* dark variant of pills, used on reflection editor */
 .card-dark .pill {
-  background: rgba(241, 237, 228, 0.08);
+  background: rgb(var(--color-night-tint) / 0.08);
   color: var(--color-night-ink);
   border-color: var(--color-night-line);
 }
@@ -877,7 +885,7 @@ textarea {
 }
 
 .card-dark .pill-ghost:hover:not(:disabled) {
-  background: rgba(241, 237, 228, 0.08);
+  background: rgb(var(--color-night-tint) / 0.08);
   color: var(--color-night-ink);
 }
 
@@ -993,7 +1001,7 @@ textarea {
 
 .compose-dark .compose-textarea::placeholder,
 .compose-dark .compose-input::placeholder {
-  color: rgba(241, 237, 228, 0.32);
+  color: rgb(var(--color-night-tint) / 0.32);
 }
 
 .compose-dark .reflection-label {
@@ -1036,14 +1044,14 @@ textarea {
 .card-dark .edit-inline-textarea,
 .card-dark .edit-inline-input {
   border-color: var(--color-night-line);
-  background: rgba(241, 237, 228, 0.04);
+  background: rgb(var(--color-night-tint) / 0.04);
   color: var(--color-night-ink);
 }
 
 .card-dark .edit-inline-textarea:focus,
 .card-dark .edit-inline-input:focus {
-  border-color: rgba(241, 237, 228, 0.32);
-  background: rgba(241, 237, 228, 0.08);
+  border-color: rgb(var(--color-night-tint) / 0.32);
+  background: rgb(var(--color-night-tint) / 0.08);
 }
 
 /* ---------- edit menu (collapses when not hovered) ---------- */
@@ -1239,12 +1247,12 @@ textarea {
 }
 
 .card-dark .drag-handle {
-  color: rgba(241, 237, 228, 0.45);
+  color: rgb(var(--color-night-tint) / 0.45);
 }
 
 .card-dark .drag-handle:hover {
   color: var(--color-night-ink);
-  background: rgba(241, 237, 228, 0.08);
+  background: rgb(var(--color-night-tint) / 0.08);
 }
 
 .drag-dots {
@@ -2185,27 +2193,176 @@ textarea {
   display: none;
 }
 
+/* ---------- cast-shadow mode ---------- */
+/* A dappled-light overlay that simulates leaves casting a soft shadow
+   across the canvas. Toggled via [data-cast="on"] on :root. Only renders
+   in light mode for now; dark-mode translation is TBD. */
+
+.cast-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  color: var(--color-ink-soft);
+  background: transparent;
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.cast-toggle:hover {
+  background: var(--color-line-soft);
+  color: var(--color-ink);
+}
+
+:root[data-cast="on"] .cast-toggle {
+  background: var(--color-line-soft);
+  color: var(--color-ink);
+}
+
+.cast-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100svh;
+  pointer-events: none;
+  z-index: 60;
+  opacity: 0;
+  mix-blend-mode: multiply;
+  transition: opacity 420ms ease;
+  /* Hide the slight overflow caused by sway transforms. */
+  overflow: hidden;
+}
+
+:root[data-cast="on"]:not([data-theme="dark"]) .cast-overlay {
+  opacity: 1;
+}
+
+/* Each layer is sized to occupy ~50% of the viewport in a specific
+   quadrant rather than filling the whole screen. A linear-gradient mask
+   fades the inner edge so the cluster trails off softly instead of
+   cutting hard at the box boundary. */
+.cast-layer {
+  position: absolute;
+  background-image: url("/cast-shadow.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(6px);
+  transform-origin: 50% 50%;
+  will-change: transform, filter;
+}
+
+/* Layer 1: anchored top-right, ~55% of viewport. Radial mask centred
+   on the off-screen top-right corner so the fade is uniform on every
+   visible edge (linear gradients only fade along one axis and leave the
+   perpendicular edges hard). */
+.cast-layer-1 {
+  top: -12%;
+  right: -8%;
+  width: 68%;
+  height: 75%;
+  opacity: 0.22;
+  mask-image: radial-gradient(
+    ellipse 115% 115% at 100% 0%,
+    black 18%,
+    transparent 98%
+  );
+  -webkit-mask-image: radial-gradient(
+    ellipse 115% 115% at 100% 0%,
+    black 18%,
+    transparent 98%
+  );
+}
+
+/* Layer 2: smaller, mirrored, anchored bottom-left, ~35% of viewport.
+   Sits much fainter so it reads as a secondary cluster drifting in from
+   off-frame rather than a competing canopy. */
+.cast-layer-2 {
+  bottom: -14%;
+  left: -10%;
+  width: 48%;
+  height: 55%;
+  background-position: 30% 60%;
+  transform: scaleX(-1);
+  opacity: 0.13;
+  filter: blur(9px);
+  mask-image: radial-gradient(
+    ellipse 115% 115% at 0% 100%,
+    black 18%,
+    transparent 98%
+  );
+  -webkit-mask-image: radial-gradient(
+    ellipse 115% 115% at 0% 100%,
+    black 18%,
+    transparent 98%
+  );
+}
+
+:root[data-cast="on"]:not([data-theme="dark"]) .cast-layer-1 {
+  animation: cast-sway-a 11s ease-in-out infinite alternate;
+}
+:root[data-cast="on"]:not([data-theme="dark"]) .cast-layer-2 {
+  animation: cast-sway-b 14s ease-in-out infinite alternate;
+}
+
+/* Pure two-stop pendulum so velocity stays continuous — `alternate`
+   ping-pongs between the extremes, `ease-in-out` only decelerates at
+   the swing limits (like a real pendulum), not in the middle. The two
+   layers use coprime-ish durations (11s + 14s) so they never sync up
+   the same way twice. */
+@keyframes cast-sway-a {
+  0% {
+    transform: translate(-26px, 14px) rotate(-1.2deg) scale(0.992);
+  }
+  100% {
+    transform: translate(26px, -14px) rotate(1.2deg) scale(1.018);
+  }
+}
+
+@keyframes cast-sway-b {
+  0% {
+    transform: translate(22px, -12px) rotate(1deg) scaleX(-1);
+  }
+  100% {
+    transform: translate(-22px, 12px) rotate(-1deg) scaleX(-1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-cast="on"]:not([data-theme="dark"]) .cast-layer-1,
+  :root[data-cast="on"]:not([data-theme="dark"]) .cast-layer-2 {
+    animation: none;
+  }
+}
+
 /* ---------- dark mode ---------- */
 
 :root[data-theme="dark"] {
-  --color-canvas: #1b1a18;
-  --color-day: #232120;
-  --color-paper: #2a2825;
-  --color-paper-soft: rgba(42, 40, 37, 0.55);
+  /* True-black canvas + warm cream ink mirror the print-feel of light
+     mode. Surfaces sit within a few percent of pure black so chrome
+     stays quiet. */
+  --color-canvas: #000000;
+  --color-day: #0a0a09;
+  --color-paper: #141312;
+  --color-paper-soft: rgba(20, 19, 18, 0.55);
   --color-ink: #f1ede4;
-  --color-ink-soft: rgba(241, 237, 228, 0.62);
-  --color-ink-mute: rgba(241, 237, 228, 0.38);
-  --color-line: rgba(241, 237, 228, 0.12);
-  --color-line-soft: rgba(241, 237, 228, 0.06);
+  --color-ink-soft: rgb(var(--color-night-tint) / 0.62);
+  --color-ink-mute: rgb(var(--color-night-tint) / 0.38);
+  --color-line: rgb(var(--color-night-tint) / 0.12);
+  --color-line-soft: rgb(var(--color-night-tint) / 0.06);
 
   /* Reflection cards stay distinct against the dark canvas by sitting
-     a little lighter than the surrounding surfaces. */
-  --color-night: #383532;
-  --color-night-soft: #423f3b;
+     a little lighter than the surrounding surfaces. The light tint
+     keeps text + overlays legible on top. */
+  --color-night: #1a1815;
+  --color-night-soft: #252220;
+  --color-night-tint: 241 237 228;
 }
 
 :root[data-theme="dark"] ::selection {
-  background: rgba(241, 237, 228, 0.18);
+  background: rgb(var(--color-night-tint) / 0.18);
 }
 
 :root[data-theme="dark"] .half-header::after {
@@ -2219,17 +2376,17 @@ textarea {
 }
 
 :root[data-theme="dark"] .markdown code {
-  background: rgba(241, 237, 228, 0.08);
+  background: rgb(var(--color-night-tint) / 0.08);
 }
 
 :root[data-theme="dark"] .edit-inline-textarea,
 :root[data-theme="dark"] .edit-inline-input {
-  background: rgba(241, 237, 228, 0.04);
+  background: rgb(var(--color-night-tint) / 0.04);
 }
 
 :root[data-theme="dark"] .edit-inline-textarea:focus,
 :root[data-theme="dark"] .edit-inline-input:focus {
-  background: rgba(241, 237, 228, 0.08);
+  background: rgb(var(--color-night-tint) / 0.08);
 }
 
 :root[data-theme="dark"] .pill-primary:hover:not(:disabled) {
@@ -2239,7 +2396,7 @@ textarea {
 
 :root[data-theme="dark"] .dropzone-overlay::before {
   background: rgba(27, 26, 24, 0.55);
-  border-color: rgba(241, 237, 228, 0.28);
+  border-color: rgb(var(--color-night-tint) / 0.28);
 }
 
 /* ---------- giphy picker (modal overlay) ---------- */
@@ -2631,14 +2788,14 @@ textarea {
 }
 
 .card-dark .reaction-overflow {
-  background: rgba(241, 237, 228, 0.08);
-  border-color: rgba(241, 237, 228, 0.16);
+  background: rgb(var(--color-night-tint) / 0.08);
+  border-color: rgb(var(--color-night-tint) / 0.16);
   color: var(--color-night-ink-soft);
 }
 
 .card-dark .reaction-overflow:hover {
   color: var(--color-night-ink);
-  border-color: rgba(241, 237, 228, 0.32);
+  border-color: rgb(var(--color-night-tint) / 0.32);
 }
 
 .card-shell:hover .reaction-add,
@@ -2773,8 +2930,8 @@ textarea {
 
 /* Reflection (card-dark) variant. */
 .card-dark .reactions .reaction-chip {
-  background: rgba(241, 237, 228, 0.08);
-  border-color: rgba(241, 237, 228, 0.16);
+  background: rgb(var(--color-night-tint) / 0.08);
+  border-color: rgb(var(--color-night-tint) / 0.16);
   color: var(--color-night-ink);
 }
 
@@ -2784,7 +2941,7 @@ textarea {
 
 .card-dark .reaction-add:hover:not(:disabled) {
   color: var(--color-night-ink);
-  background: rgba(241, 237, 228, 0.06);
+  background: rgb(var(--color-night-tint) / 0.06);
 }
 
 .card-dark .reaction-remove {
