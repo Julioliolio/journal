@@ -62,7 +62,7 @@ export function ReflectionCard({
   if (editing) {
     return (
       <div
-        className="card-shell card-dark felt-drop"
+        className="card-shell card-light reflection-card felt-drop"
         data-fresh={isFresh || undefined}
         data-dragging={dragging || undefined}
         onDragEnter={(event) => {
@@ -107,37 +107,39 @@ export function ReflectionCard({
             }
           }}
         >
-          <Field
-            name="did"
-            label="did"
-            defaultValue={card.reflectionDid ?? ""}
-          />
-          <Field
-            name="learned"
-            label="learned"
-            defaultValue={card.reflectionLearned ?? ""}
-          />
-          <Field
-            name="felt"
-            label="felt"
-            defaultValue={card.reflectionFelt ?? ""}
-          >
-            <FeltImagePicker
-              url={feltImageUrl}
-              onChange={(url, file) => {
-                if (dropObjectUrlRef.current) {
-                  URL.revokeObjectURL(dropObjectUrlRef.current);
-                  dropObjectUrlRef.current = null;
-                }
-                setFeltImageUrl(url);
-                setFeltFile(file ?? null);
-              }}
-              onEmojiPick={(emoji) =>
-                insertIntoNamedField(formRef.current, "felt", emoji)
-              }
-              disabled={saved || dropping}
+          <div className="reflection-frame">
+            <Field
+              name="did"
+              label="did"
+              defaultValue={card.reflectionDid ?? ""}
             />
-          </Field>
+            <Field
+              name="learned"
+              label="learned"
+              defaultValue={card.reflectionLearned ?? ""}
+            />
+            <Field
+              name="felt"
+              label="felt"
+              defaultValue={card.reflectionFelt ?? ""}
+            >
+              <FeltImagePicker
+                url={feltImageUrl}
+                onChange={(url, file) => {
+                  if (dropObjectUrlRef.current) {
+                    URL.revokeObjectURL(dropObjectUrlRef.current);
+                    dropObjectUrlRef.current = null;
+                  }
+                  setFeltImageUrl(url);
+                  setFeltFile(file ?? null);
+                }}
+                onEmojiPick={(emoji) =>
+                  insertIntoNamedField(formRef.current, "felt", emoji)
+                }
+                disabled={saved || dropping}
+              />
+            </Field>
+          </div>
           <div className="compose-footer">
             <span className="compose-spacer" />
             <button
@@ -178,17 +180,22 @@ export function ReflectionCard({
   }
 
   return (
-    <div className="card-shell card-dark" data-fresh={isFresh || undefined}>
+    <div
+      className="card-shell card-light reflection-card"
+      data-fresh={isFresh || undefined}
+    >
       <time className="card-time" dateTime={card.createdAt.toISOString()}>
         {formatCardTime(card.createdAt)}
       </time>
-      <Section label="did" value={card.reflectionDid} />
-      <Section label="learned" value={card.reflectionLearned} />
-      <Section
-        label="felt"
-        value={card.reflectionFelt}
-        imageUrl={card.reflectionFeltImageUrl}
-      />
+      <div className="reflection-frame">
+        <Section label="did" value={card.reflectionDid} />
+        <Section label="learned" value={card.reflectionLearned} />
+        <Section
+          label="felt"
+          value={card.reflectionFelt}
+          imageUrl={card.reflectionFeltImageUrl}
+        />
+      </div>
       <Reactions
         cardId={card.id}
         reactions={reactions}

@@ -10,11 +10,6 @@
   --color-ink-mute: #a8a094;
   --color-line: #e8e3da;
   --color-line-soft: rgba(27, 26, 24, 0.06);
-  --color-night: #1b1a18;
-  --color-night-soft: #2a2825;
-  --color-night-ink: #f1ede4;
-  --color-night-ink-soft: rgba(241, 237, 228, 0.62);
-  --color-night-line: rgba(241, 237, 228, 0.12);
 
   --radius-day: 22px;
   --radius-mini: 14px;
@@ -469,9 +464,27 @@ textarea {
   color: var(--color-ink);
 }
 
-.card-dark {
-  background: var(--color-night);
-  color: var(--color-night-ink);
+/* Reflection cards use card-light and add an inset hairline frame so they
+   read as distinct from notes without flipping the palette. The outer
+   card-shell padding shrinks; the frame supplies its own inner padding. */
+.reflection-card {
+  padding: 8px;
+}
+
+.reflection-card .card-time {
+  top: 18px;
+  right: 20px;
+}
+
+.reflection-frame {
+  border: 1px solid var(--color-ink-mute);
+  border-radius: calc(var(--radius-mini) - 6px);
+  padding: 14px 16px;
+}
+
+.reflection-card > .reactions {
+  margin-top: 8px;
+  padding: 0 8px;
 }
 
 .card-image {
@@ -543,10 +556,6 @@ textarea {
   font-size: 0.92em;
 }
 
-.card-dark .markdown code {
-  background: rgba(241, 237, 228, 0.12);
-}
-
 .markdown strong {
   font-weight: 600;
 }
@@ -561,7 +570,7 @@ textarea {
   font-size: 10px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--color-night-ink-soft);
+  color: var(--color-ink-soft);
   margin-bottom: 6px;
 }
 
@@ -575,7 +584,7 @@ textarea {
   margin-top: 10px;
   border-radius: 10px;
   overflow: hidden;
-  background: rgba(241, 237, 228, 0.04);
+  background: var(--color-line-soft);
 }
 
 .reflection-image img,
@@ -666,24 +675,24 @@ textarea {
   font-size: 11px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--color-night-ink);
-  background: rgba(241, 237, 228, 0.08);
+  color: var(--color-ink);
+  background: rgba(252, 250, 244, 0.82);
   padding: 8px 14px;
   border-radius: 999px;
-  border: 1px solid rgba(241, 237, 228, 0.18);
+  border: 1px solid var(--color-line);
 }
 
 .felt-drop-status {
   position: absolute;
   top: 10px;
   right: 10px;
-  background: rgba(241, 237, 228, 0.08);
-  border: 1px solid var(--color-night-line);
+  background: var(--color-paper-soft);
+  border: 1px solid var(--color-line);
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 11px;
   letter-spacing: 0.04em;
-  color: var(--color-night-ink-soft);
+  color: var(--color-ink-soft);
   z-index: 2;
 }
 
@@ -857,30 +866,6 @@ textarea {
   border-color: transparent;
 }
 
-/* dark variant of pills, used on reflection editor */
-.card-dark .pill {
-  background: rgba(241, 237, 228, 0.08);
-  color: var(--color-night-ink);
-  border-color: var(--color-night-line);
-}
-
-.card-dark .pill:hover:not(:disabled) {
-  background: var(--color-night-ink);
-  color: var(--color-night);
-  border-color: var(--color-night-ink);
-}
-
-.card-dark .pill-ghost {
-  background: transparent;
-  border-color: transparent;
-  color: var(--color-night-ink-soft);
-}
-
-.card-dark .pill-ghost:hover:not(:disabled) {
-  background: rgba(241, 237, 228, 0.08);
-  color: var(--color-night-ink);
-}
-
 /* ---------- chrome-less compose form ---------- */
 .compose {
   display: flex;
@@ -978,33 +963,6 @@ textarea {
   color: var(--color-ink);
 }
 
-/* ---------- reflection compose: dark variant ---------- */
-
-.compose-dark {
-  background: var(--color-night);
-  color: var(--color-night-ink);
-}
-
-.compose-dark .compose-textarea,
-.compose-dark .compose-input {
-  color: var(--color-night-ink);
-  caret-color: var(--color-night-ink);
-}
-
-.compose-dark .compose-textarea::placeholder,
-.compose-dark .compose-input::placeholder {
-  color: rgba(241, 237, 228, 0.32);
-}
-
-.compose-dark .reflection-label {
-  color: var(--color-night-ink-soft);
-}
-
-.compose-dark .compose-row + .compose-row {
-  border-top: 1px solid var(--color-night-line);
-  padding-top: 10px;
-}
-
 /* ---------- hairline edit-in-place (mini-card edit) ---------- */
 
 .edit-inline {
@@ -1031,19 +989,6 @@ textarea {
 .edit-inline-input:focus {
   border-color: var(--color-ink-soft);
   background: rgba(255, 255, 255, 0.7);
-}
-
-.card-dark .edit-inline-textarea,
-.card-dark .edit-inline-input {
-  border-color: var(--color-night-line);
-  background: rgba(241, 237, 228, 0.04);
-  color: var(--color-night-ink);
-}
-
-.card-dark .edit-inline-textarea:focus,
-.card-dark .edit-inline-input:focus {
-  border-color: rgba(241, 237, 228, 0.32);
-  background: rgba(241, 237, 228, 0.08);
 }
 
 /* ---------- edit menu (collapses when not hovered) ---------- */
@@ -1116,10 +1061,6 @@ textarea {
    make the cluster feel disconnected. */
 .edit-buttons .pill-ghost {
   border-color: var(--color-line);
-}
-
-.card-dark .edit-buttons .pill-ghost {
-  border-color: var(--color-night-line);
 }
 
 /* "confirm delete" + "cancel" mount when the user clicks delete. They
@@ -1236,15 +1177,6 @@ textarea {
   .drag-handle {
     opacity: 0.55;
   }
-}
-
-.card-dark .drag-handle {
-  color: rgba(241, 237, 228, 0.45);
-}
-
-.card-dark .drag-handle:hover {
-  color: var(--color-night-ink);
-  background: rgba(241, 237, 228, 0.08);
 }
 
 .drag-dots {
@@ -2197,11 +2129,6 @@ textarea {
   --color-ink-mute: rgba(241, 237, 228, 0.38);
   --color-line: rgba(241, 237, 228, 0.12);
   --color-line-soft: rgba(241, 237, 228, 0.06);
-
-  /* Reflection cards stay distinct against the dark canvas by sitting
-     a little lighter than the surrounding surfaces. */
-  --color-night: #383532;
-  --color-night-soft: #423f3b;
 }
 
 :root[data-theme="dark"] ::selection {
@@ -2630,17 +2557,6 @@ textarea {
   background: var(--color-paper);
 }
 
-.card-dark .reaction-overflow {
-  background: rgba(241, 237, 228, 0.08);
-  border-color: rgba(241, 237, 228, 0.16);
-  color: var(--color-night-ink-soft);
-}
-
-.card-dark .reaction-overflow:hover {
-  color: var(--color-night-ink);
-  border-color: rgba(241, 237, 228, 0.32);
-}
-
 .card-shell:hover .reaction-add,
 .card-shell:focus-within .reaction-add,
 .reactions[data-reveal] .reaction-add {
@@ -2771,31 +2687,6 @@ textarea {
   padding-bottom: 14px;
 }
 
-/* Reflection (card-dark) variant. */
-.card-dark .reactions .reaction-chip {
-  background: rgba(241, 237, 228, 0.08);
-  border-color: rgba(241, 237, 228, 0.16);
-  color: var(--color-night-ink);
-}
-
-.card-dark .reaction-add {
-  color: var(--color-night-ink-soft);
-}
-
-.card-dark .reaction-add:hover:not(:disabled) {
-  color: var(--color-night-ink);
-  background: rgba(241, 237, 228, 0.06);
-}
-
-.card-dark .reaction-remove {
-  background: var(--color-night-ink);
-  color: var(--color-night);
-  border-color: var(--color-night);
-}
-
-.card-dark .reaction-error {
-  color: var(--color-night-ink-soft);
-}
 
 :root[data-theme="dark"] .card-image-reactions-wrap .reactions:not([data-empty]) {
   background: rgba(27, 26, 24, 0.65);

@@ -32,7 +32,7 @@ export function ReflectionForm({
   return (
     <form
       ref={formRef}
-      className="compose compose-dark"
+      className="compose"
       action={(fd) => {
         fd.set("date", today);
         fd.set("clientToday", today);
