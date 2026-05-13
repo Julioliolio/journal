@@ -195,12 +195,12 @@ export function ReflectionCard({
           value={card.reflectionFelt}
           imageUrl={card.reflectionFeltImageUrl}
         />
-        <Reactions
-          cardId={card.id}
-          reactions={reactions}
-          canAdd={!isOwn || !editable}
-        />
       </div>
+      <Reactions
+        cardId={card.id}
+        reactions={reactions}
+        canAdd={!isOwn || !editable}
+      />
       {isOwn && editable && (
         <EditMenu card={card} onEdit={() => setEditing(true)} />
       )}
