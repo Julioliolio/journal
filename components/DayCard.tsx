@@ -71,7 +71,7 @@ export function DayCard({
 function EmptyHint({ isToday, isOwn }: { isToday: boolean; isOwn: boolean }) {
   if (!(isToday && isOwn)) return null;
   return (
-    <p className="empty-quiet">hover to add — or drop / paste an image.</p>
+    <p className="empty-quiet">hover to add — or drop / paste an image or video.</p>
   );
 }
 

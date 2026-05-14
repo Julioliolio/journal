@@ -488,7 +488,8 @@ textarea {
   background: var(--color-paper);
 }
 
-.card-image img {
+.card-image img,
+.card-image video {
   display: block;
   width: 100%;
   height: auto;

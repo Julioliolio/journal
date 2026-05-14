@@ -9,6 +9,7 @@ import { AutoGrowTextarea } from "@/components/AutoGrowTextarea";
 import { formatCardTime } from "@/lib/date";
 import { useEscapeKey } from "@/lib/hooks/useEscapeKey";
 import { useSubmitMorph } from "@/lib/hooks/useSubmitMorph";
+import { isVideoUrl } from "@/lib/image";
 import type { Card, Reaction } from "@/lib/db/schema";
 
 import { EditMenu, useUpdateCard } from "./EditMenu";
@@ -35,10 +36,18 @@ export function NoteImageCard({
   if (editing) {
     return (
       <div className="card-shell card-image" data-fresh={isFresh || undefined}>
-        {card.imageUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={card.imageUrl} alt="" loading="lazy" />
-        )}
+        {card.imageUrl &&
+          (isVideoUrl(card.imageUrl) ? (
+            <video
+              src={card.imageUrl}
+              controls
+              preload="metadata"
+              playsInline
+            />
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={card.imageUrl} alt="" loading="lazy" />
+          ))}
         <form
           className="edit-inline"
           style={{ padding: "14px 18px 16px" }}
@@ -98,20 +107,28 @@ export function NoteImageCard({
   return (
     <div className="card-shell card-image" data-fresh={isFresh || undefined}>
       <div className="card-image-figure">
-        {card.imageUrl && (
-          <button
-            type="button"
-            className="card-image-zoom"
-            onClick={(e) => {
-              e.stopPropagation();
-              setEnlarged(true);
-            }}
-            aria-label="enlarge image"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={card.imageUrl} alt="" loading="lazy" />
-          </button>
-        )}
+        {card.imageUrl &&
+          (isVideoUrl(card.imageUrl) ? (
+            <video
+              src={card.imageUrl}
+              controls
+              preload="metadata"
+              playsInline
+            />
+          ) : (
+            <button
+              type="button"
+              className="card-image-zoom"
+              onClick={(e) => {
+                e.stopPropagation();
+                setEnlarged(true);
+              }}
+              aria-label="enlarge image"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={card.imageUrl} alt="" loading="lazy" />
+            </button>
+          ))}
         <time
           className="card-time card-time-overlay"
           dateTime={card.createdAt.toISOString()}

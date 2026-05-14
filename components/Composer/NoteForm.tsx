@@ -9,7 +9,7 @@ import {
   createNoteAction,
   createNoteImageAction,
 } from "@/app/actions/cards";
-import { processImage, IMAGE_ACCEPT_ATTR } from "@/lib/image";
+import { processMedia, MEDIA_ACCEPT_ATTR } from "@/lib/image";
 import { AutoGrowTextarea } from "@/components/AutoGrowTextarea";
 import { useSubmitMorph } from "@/lib/hooks/useSubmitMorph";
 import type { PickerSelection } from "@/lib/giphy-types";
@@ -21,7 +21,7 @@ type Status = "idle" | "processing" | "saving";
 
 const STATUS_LABEL: Record<Status, string> = {
   idle: "save",
-  processing: "compressing",
+  processing: "preparing",
   saving: "saving",
 };
 
@@ -72,7 +72,7 @@ export function NoteForm({
     event.preventDefault();
     setError(null);
     if (!canSave) {
-      setError("Add a note or image.");
+      setError("Add a note or media.");
       return;
     }
     // Sync inside the gesture handler — iOS Safari and Firefox Android
@@ -88,7 +88,7 @@ export function NoteForm({
           fd.set("imageUrl", giphyUrl);
         } else {
           setStatus("processing");
-          const processed = await processImage(file!);
+          const processed = await processMedia(file!);
           fd.set("imageFile", processed);
         }
         setStatus("saving");
@@ -136,7 +136,7 @@ export function NoteForm({
           <label className="file-pill">
             <input
               type="file"
-              accept={IMAGE_ACCEPT_ATTR}
+              accept={MEDIA_ACCEPT_ATTR}
               disabled={busy}
               onChange={(event) =>
                 pickFile(event.target.files?.[0] ?? null)
@@ -145,7 +145,7 @@ export function NoteForm({
             {file ? (
               <span className="file-name">{file.name}</span>
             ) : (
-              <>+ image</>
+              <>+ media</>
             )}
           </label>
           {!file && (
@@ -168,7 +168,7 @@ export function NoteForm({
             onClick={clearMedia}
             disabled={busy}
           >
-            remove image
+            remove media
           </button>
         </div>
       )}

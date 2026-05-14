@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { createImageAction } from "@/app/actions/cards";
-import { processImage } from "@/lib/image";
+import { processMedia } from "@/lib/image";
 import { invalidateCanvas } from "@/lib/queries";
 
 type Status =
@@ -30,7 +30,7 @@ export function DropZone({
     async (file: File) => {
       try {
         setStatus({ kind: "processing" });
-        const processed = await processImage(file);
+        const processed = await processMedia(file);
         setStatus({ kind: "uploading" });
         const createFd = new FormData();
         createFd.set("date", today);
@@ -58,7 +58,10 @@ export function DropZone({
       const items = event.clipboardData?.items;
       if (!items) return;
       for (const item of items) {
-        if (item.kind === "file" && item.type.startsWith("image/")) {
+        if (
+          item.kind === "file" &&
+          (item.type.startsWith("image/") || item.type.startsWith("video/"))
+        ) {
           const file = item.getAsFile();
           if (file) {
             event.preventDefault();
@@ -114,12 +117,12 @@ export function DropZone({
 
       {status.kind === "drag" && (
         <div className="dropzone-overlay" aria-hidden="true">
-          <span className="dropzone-overlay-text">drop image to add</span>
+          <span className="dropzone-overlay-text">drop media to add</span>
         </div>
       )}
       {status.kind === "processing" && (
         <div className="dropzone-status" data-progress="processing">
-          compressing image…
+          preparing…
         </div>
       )}
       {status.kind === "uploading" && (
