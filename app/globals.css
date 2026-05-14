@@ -498,6 +498,7 @@ textarea {
 /* Note text under a full-bleed image (note_image card). Sits below the
    image with horizontal padding matching the rest of the card. */
 .card-image .image-note {
+  position: relative;
   padding: 14px 18px;
   color: var(--color-ink);
   transition: padding-bottom 220ms ease;
@@ -511,6 +512,16 @@ textarea {
 .card-image:has(.edit-slot):focus-within .image-note,
 .card-image:has(.edit-slot[data-open]) .image-note {
   padding-bottom: 0;
+}
+
+/* Empty reactions row inside .image-note: float out of flow so the hover-
+   revealed "+" doesn't push the edit menu down. Mirrors the absolute-
+   positioning trick used for .card-shell > .reactions[data-empty]. */
+.card-image .image-note > .reactions[data-empty] {
+  position: absolute;
+  right: 18px;
+  bottom: 14px;
+  margin: 0;
 }
 
 /* ---------- markdown ---------- */
