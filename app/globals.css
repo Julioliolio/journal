@@ -464,6 +464,14 @@ textarea {
   z-index: 2;
   pointer-events: none;
   font-variant-numeric: tabular-nums;
+  transition: right 140ms ease;
+}
+
+/* When the drag handle is revealed (hover/focus on own cards), nudge the
+   timestamp left so it doesn't sit underneath the dots. */
+.sortable-wrap:hover .card-time,
+.sortable-wrap:focus-within .card-time {
+  right: 38px;
 }
 
 /* Variant for image cards: floats over the image, so it gets a subtle
@@ -477,6 +485,14 @@ textarea {
   color: rgba(255, 255, 255, 0.86);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
+}
+
+@media (hover: none) {
+  /* On touch the handle is permanently dimmed-visible (see .drag-handle
+     rule below), so keep the timestamp shifted as well. */
+  .sortable-wrap .card-time {
+    right: 38px;
+  }
 }
 
 .card-light {
