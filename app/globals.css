@@ -400,20 +400,27 @@ textarea {
 
 /* ---------- masonry + day-cards ---------- */
 
+/* JS-distributed flex columns. Replaces CSS multi-column (column-width)
+   so a card's height change only reflows its own column — CSS columns
+   used to rebalance globally on every frame of a height transition,
+   which made cards in other columns visibly jitter while the today
+   card grew on hover. Column count is set by the Masonry component
+   based on container width / 300px target column size. */
 .masonry {
-  column-width: 300px;
-  column-gap: 14px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
 }
 
-@media (max-width: 767px) {
-  .masonry {
-    column-count: 1;
-  }
+.masonry-col {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .day-card {
   display: block;
-  break-inside: avoid;
   background: var(--color-day);
   border-radius: var(--radius-day);
   padding: 20px;
@@ -482,6 +489,42 @@ textarea {
   color: var(--color-night-ink);
 }
 
+/* Optimistic placeholder shown in today's stack while a dropped/pasted
+   image is compressing + uploading. Without it the user gets a long
+   blank pause between the drop and the new card materializing. */
+.card-uploading {
+  background: var(--color-paper);
+  color: var(--color-ink-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px 14px;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+
+.card-uploading-label {
+  font-variant-numeric: tabular-nums;
+}
+
+.card-uploading-bar {
+  display: block;
+  width: 100%;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--color-line-soft);
+  overflow: hidden;
+  align-self: stretch;
+}
+
+.card-uploading-bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--color-ink);
+  border-radius: inherit;
+  transition: width 160ms ease;
+}
+
 .card-image {
   padding: 0;
   overflow: hidden;
@@ -493,6 +536,10 @@ textarea {
   display: block;
   width: 100%;
   height: auto;
+  /* Promote to its own composited layer so animated GIFs don't jitter
+     when the day-card above expands the composer slot and pushes this
+     card down via layout reflow. */
+  transform: translateZ(0);
 }
 
 /* Note text under a full-bleed image (note_image card). Sits below the
@@ -603,6 +650,10 @@ textarea {
   display: block;
   width: 100%;
   height: auto;
+  /* Same layer promotion as .card-image img — keeps animated GIFs from
+     jittering when the day-card above expands the composer slot and
+     reflows everything below. */
+  transform: translateZ(0);
 }
 
 .reflection-image video {
@@ -801,6 +852,8 @@ textarea {
 }
 
 @media (hover: none) {
+  /* Touch devices have no hover — keep the slot expanded and the pills
+     visible at all times. */
   .composer-slot {
     grid-template-rows: 1fr;
   }

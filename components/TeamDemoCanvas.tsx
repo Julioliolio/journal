@@ -30,17 +30,19 @@ export function TeamDemoCanvas() {
 
   const reactionsByCardId = useReactionsByCardId(data?.reactions ?? []);
 
+  const partners = data?.partners ?? DEMO_PARTNERS_TEAM;
+
   const people: Person[] = useMemo(() => {
     const cards = data?.cards ?? [];
     return PERSON_KEYS.map((key) => ({
       key,
-      label: DEMO_PARTNERS_TEAM[key],
+      label: partners[key],
       cards: cards.filter((c) => c.personKey === key),
     })).filter(
       (p): p is Person =>
         typeof p.label === "string" && p.label.length > 0,
     );
-  }, [data?.cards]);
+  }, [data?.cards, partners]);
 
   const isMobile = useIsMobile();
 

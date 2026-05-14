@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { createImageAction } from "@/app/actions/cards";
@@ -10,9 +17,29 @@ import { invalidateCanvas } from "@/lib/queries";
 type Status =
   | { kind: "idle" }
   | { kind: "drag" }
-  | { kind: "processing" }
+  | { kind: "processing"; percent: number }
   | { kind: "uploading" }
   | { kind: "error"; message: string };
+
+export type UploadState = {
+  /** Stage label shown next to the bar. */
+  stage: "compressing" | "uploading";
+  /** 0–100 progress for the compression step; null while uploading
+   *  (we don't get progress events from the server action — the bar
+   *  fills to 100% on stage transition). */
+  percent: number | null;
+};
+
+/** State of a drop-initiated upload, or null when idle. The today
+ *  day-card subscribes to this so it can render an optimistic
+ *  placeholder card while the file is compressing / uploading — without
+ *  it the user just sees a long pause between the drop and the new card
+ *  showing up. */
+const UploadInFlightContext = createContext<UploadState | null>(null);
+
+export function useUploadInFlight(): UploadState | null {
+  return useContext(UploadInFlightContext);
+}
 
 export function DropZone({
   today,
@@ -29,8 +56,10 @@ export function DropZone({
   const ingest = useCallback(
     async (file: File) => {
       try {
-        setStatus({ kind: "processing" });
-        const processed = await processMedia(file);
+        setStatus({ kind: "processing", percent: 0 });
+        const processed = await processMedia(file, (percent) => {
+          setStatus({ kind: "processing", percent });
+        });
         setStatus({ kind: "uploading" });
         const createFd = new FormData();
         createFd.set("date", today);
@@ -80,6 +109,13 @@ export function DropZone({
     status.kind === "uploading" ||
     status.kind === "error";
 
+  const uploadState: UploadState | null =
+    status.kind === "processing"
+      ? { stage: "compressing", percent: status.percent }
+      : status.kind === "uploading"
+        ? { stage: "uploading", percent: null }
+        : null;
+
   return (
     <div
       ref={ref}
@@ -113,21 +149,13 @@ export function DropZone({
         else setStatus({ kind: "idle" });
       }}
     >
-      {children}
+      <UploadInFlightContext.Provider value={uploadState}>
+        {children}
+      </UploadInFlightContext.Provider>
 
       {status.kind === "drag" && (
         <div className="dropzone-overlay" aria-hidden="true">
           <span className="dropzone-overlay-text">drop media to add</span>
-        </div>
-      )}
-      {status.kind === "processing" && (
-        <div className="dropzone-status" data-progress="processing">
-          preparing…
-        </div>
-      )}
-      {status.kind === "uploading" && (
-        <div className="dropzone-status" data-progress="uploading">
-          uploading…
         </div>
       )}
       {status.kind === "error" && (

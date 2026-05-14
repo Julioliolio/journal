@@ -47,12 +47,17 @@ function rewrapWithMime(file: File, mime: string): File {
 
 /**
  * Take any user-supplied image file, convert HEIC/HEIF to JPEG if needed,
- * compress to ≤1MB / ≤1920px on the longest edge, and return a fresh File.
- * GIFs and WebPs are passed through untouched so animation is preserved
- * (animated webp is now common — Tenor/Giphy "gifs" are usually webp);
- * only the size cap is enforced.
+ * compress to ≤1MB / ≤1600px on the longest edge, and return a fresh
+ * File. GIFs and WebPs are passed through untouched so animation is
+ * preserved (animated webp is now common — Tenor/Giphy "gifs" are
+ * usually webp); only the size cap is enforced.
+ *
+ * `onProgress` reports compression progress on a 0–100 scale.
  */
-export async function processImage(file: File): Promise<File> {
+export async function processImage(
+  file: File,
+  onProgress?: (percent: number) => void,
+): Promise<File> {
   const mime = detectMime(file);
 
   if (!ACCEPTED_IMAGE.has(mime)) {
@@ -71,7 +76,21 @@ export async function processImage(file: File): Promise<File> {
         )}MB for ${mime === "image/gif" ? "GIF" : "WebP"}).`,
       );
     }
+    onProgress?.(100);
     return rewrapWithMime(file, mime);
+  }
+
+  // Already small + non-HEIC: send as-is. Avoids a multi-second canvas
+  // re-encode for a file that's already within budget — by far the
+  // biggest win for "make this faster".
+  const SKIP_COMPRESS_BYTES = 600 * 1024;
+  if (
+    file.size <= SKIP_COMPRESS_BYTES &&
+    mime !== "image/heic" &&
+    mime !== "image/heif"
+  ) {
+    onProgress?.(100);
+    return file;
   }
 
   let working: File = file;
@@ -94,11 +113,18 @@ export async function processImage(file: File): Promise<File> {
     "browser-image-compression"
   );
   const compressed = await imageCompression(working, {
+    // 1600 is enough for retina display at the card's native size and
+    // takes ~half as long to encode as 1920.
     maxSizeMB: 1,
-    maxWidthOrHeight: 1920,
+    maxWidthOrHeight: 1600,
     useWebWorker: true,
-    initialQuality: 0.8,
+    initialQuality: 0.78,
+    // Cap the binary-search passes — without this the library can re-encode
+    // 5+ times to hit maxSizeMB exactly. Two passes get within ~10% and is
+    // dramatically faster.
+    maxIteration: 2,
     fileType: working.type === "image/png" ? "image/png" : "image/jpeg",
+    onProgress: (p: number) => onProgress?.(p),
   });
   return compressed;
 }
@@ -108,7 +134,10 @@ export async function processImage(file: File): Promise<File> {
  * `processImage` pipeline; videos are passed through with only a size
  * cap (the browser can't usefully transcode them client-side).
  */
-export async function processMedia(file: File): Promise<File> {
+export async function processMedia(
+  file: File,
+  onProgress?: (percent: number) => void,
+): Promise<File> {
   const mime = detectMime(file);
 
   if (mime.startsWith("video/")) {
@@ -124,10 +153,11 @@ export async function processMedia(file: File): Promise<File> {
         )}MB).`,
       );
     }
+    onProgress?.(100);
     return rewrapWithMime(file, mime);
   }
 
-  return processImage(file);
+  return processImage(file, onProgress);
 }
 
 export function isVideoUrl(url: string): boolean {

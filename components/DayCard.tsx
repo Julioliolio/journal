@@ -27,6 +27,7 @@ import type { Card, Reaction } from "@/lib/db/schema";
 import { invalidateCanvas } from "@/lib/queries";
 
 import { Composer } from "./Composer";
+import { useUploadInFlight } from "./DropZone";
 import { MiniCard } from "./MiniCard";
 import { MiniCardWithLock } from "./MiniCard/WithLock";
 
@@ -75,6 +76,44 @@ function EmptyHint({ isToday, isOwn }: { isToday: boolean; isOwn: boolean }) {
   );
 }
 
+function UploadingPlaceholder({
+  stage,
+  percent,
+}: {
+  stage: "compressing" | "uploading";
+  percent: number | null;
+}) {
+  // Compression progress is real (0–100 from browser-image-compression).
+  // The upload step has no progress events, so we fill to 100% on
+  // stage transition — a short determinate bar feels much more
+  // responsive than another spinner.
+  const fill = stage === "uploading" ? 100 : (percent ?? 0);
+  const label =
+    stage === "uploading"
+      ? "uploading…"
+      : percent === null
+        ? "compressing…"
+        : `compressing… ${Math.round(percent)}%`;
+  return (
+    <div
+      className="card-shell card-uploading"
+      role="progressbar"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={fill}
+      aria-label={stage === "uploading" ? "uploading" : "compressing image"}
+    >
+      <span className="card-uploading-label">{label}</span>
+      <span className="card-uploading-bar" aria-hidden="true">
+        <span
+          className="card-uploading-bar-fill"
+          style={{ width: `${fill}%` }}
+        />
+      </span>
+    </div>
+  );
+}
+
 function DayBody({
   date,
   cards,
@@ -91,6 +130,8 @@ function DayBody({
   const isToday = date === today;
   const qc = useQueryClient();
   const haptic = useWebHaptics();
+  const uploadState = useUploadInFlight();
+  const showUploadingHere = !!uploadState && isToday && isOwn;
   const mounted = useSyncExternalStore(
     subscribeNoop,
     () => true,
@@ -125,6 +166,16 @@ function DayBody({
   }, [cards, orderedIds]);
 
   if (items.length === 0) {
+    if (showUploadingHere && uploadState) {
+      return (
+        <div className="mini-stack">
+          <UploadingPlaceholder
+            stage={uploadState.stage}
+            percent={uploadState.percent}
+          />
+        </div>
+      );
+    }
     return <EmptyHint isToday={isToday} isOwn={isOwn} />;
   }
 
@@ -134,6 +185,12 @@ function DayBody({
   if (!isOwn || !mounted) {
     return (
       <div className="mini-stack">
+        {showUploadingHere && uploadState && (
+            <UploadingPlaceholder
+              stage={uploadState.stage}
+              percent={uploadState.percent}
+            />
+          )}
         {items.map((c) => (
           <MiniCardWithLock
             key={c.id}
@@ -190,6 +247,12 @@ function DayBody({
     >
       <SortableContext items={orderedIds} strategy={verticalListSortingStrategy}>
         <div className="mini-stack">
+          {showUploadingHere && uploadState && (
+            <UploadingPlaceholder
+              stage={uploadState.stage}
+              percent={uploadState.percent}
+            />
+          )}
           {items.map((c) => (
             <MiniCardWithLock
               key={c.id}

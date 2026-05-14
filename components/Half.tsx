@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { formatDayHeader } from "@/lib/date";
 import type { Card, PersonKey, Reaction } from "@/lib/db/schema";
@@ -257,8 +257,9 @@ export function Half({
             {isOwn ? "drop your first card" : "nothing yet"}
           </div>
         )}
-        <div className="masonry">
-          {dates.map((date) => {
+        <Masonry
+          dates={dates}
+          render={(date) => {
             const dayCards = (grouped.get(date) ?? [])
               .slice()
               .sort((a, b) => b.position - a.position);
@@ -272,8 +273,8 @@ export function Half({
                 today={today}
               />
             );
-          })}
-        </div>
+          }}
+        />
       </div>
     </div>
   );
@@ -296,6 +297,73 @@ export function Half({
   );
 }
 
+/** Target column width — matches the previous CSS `column-width: 300px`. */
+const COLUMN_TARGET = 300;
+const COLUMN_GAP = 14;
+
+/** Drop-in replacement for the old CSS multi-column masonry. Splits
+ *  dates into N independent flex columns based on container width.
+ *  Each column reflows independently — that's the whole point: a card
+ *  growing in one column (e.g. today's composer expanding on hover)
+ *  never causes cards in other columns to shift, so animated content
+ *  there can't jitter. */
+function Masonry({
+  dates,
+  render,
+}: {
+  dates: string[];
+  render: (date: string) => React.ReactNode;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [colCount, setColCount] = useState(1);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let lastW = -1;
+    const measure = () => {
+      const w = el.clientWidth;
+      if (w === lastW) return;
+      lastW = w;
+      const next = Math.max(
+        1,
+        Math.floor((w + COLUMN_GAP) / (COLUMN_TARGET + COLUMN_GAP)),
+      );
+      setColCount((prev) => (prev === next ? prev : next));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    if (el.parentElement) ro.observe(el.parentElement);
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, []);
+
+  const columns = useMemo(() => {
+    const cols: string[][] = Array.from({ length: colCount }, () => []);
+    // Sequential distribution preserves chronological order top-to-bottom
+    // within each column, matching what CSS multi-column did.
+    const perCol = Math.ceil(dates.length / colCount);
+    dates.forEach((date, i) => {
+      const idx = Math.min(Math.floor(i / perCol), colCount - 1);
+      cols[idx]!.push(date);
+    });
+    return cols;
+  }, [dates, colCount]);
+
+  return (
+    <div ref={ref} className="masonry">
+      {columns.map((colDates, i) => (
+        <div key={i} className="masonry-col">
+          {colDates.map(render)}
+        </div>
+      ))}
+    </div>
+  );
+}
 function groupByDate(cards: Card[]): Map<string, Card[]> {
   const out = new Map<string, Card[]>();
   for (const c of cards) {

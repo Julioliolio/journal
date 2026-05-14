@@ -566,6 +566,99 @@ export function buildDemoData(today: string): {
 // (prepping sessions, sharing news, giving feedback) so the existing
 // references in Julio/Sam's posts land naturally.
 const SEEDS_TEAM_EXTRA: Seed[] = [
+  // ─── 14 days ago — Sat, weekend before kickoff ───────────────────────
+  {
+    person: "name3",
+    daysAgo: 14,
+    type: "reflection",
+    did: "- Última pasada al material de la Sesión 0.\n- Subí los slides al drive y compartí el link con @Ale Morales.",
+    learned: "Cerrar materiales el sábado >>> el domingo por la noche.",
+    felt: "📋",
+    reactions: [
+      { kind: "emoji", content: "📋" },
+      { kind: "emoji", content: "💪" },
+    ],
+  },
+  {
+    person: "name4",
+    daysAgo: 14,
+    type: "note",
+    text: "sábado revisando materiales con @JC. el lunes empieza fuerte 💪",
+    reactions: [
+      { kind: "emoji", content: "💪" },
+      { kind: "emoji", content: "🚀" },
+    ],
+  },
+  {
+    person: "name1",
+    daysAgo: 14,
+    type: "note",
+    text: "weekend antes de empezar el programa. terraza, libreta nueva, café. listos.",
+    reactions: [
+      { kind: "emoji", content: "☕" },
+      { kind: "emoji", content: "📓" },
+      { kind: "gif", content: G.happy, w: 240, h: 200 },
+    ],
+  },
+  {
+    person: "name2",
+    daysAgo: 14,
+    type: "reflection",
+    did: "- Monté la plantilla base de Figjam para los apuntes de las sesiones.\n- Bloques: lo bueno / lo mejorable / preguntas / ideas.",
+    learned: "Si la plantilla ya está hecha el sábado, el lunes solo es darle play.",
+    felt: "📓",
+    reactions: [
+      { kind: "emoji", content: "📓" },
+      { kind: "emoji", content: "🙌" },
+    ],
+  },
+
+  // ─── 13 days ago — Sun, day before kickoff ───────────────────────────
+  {
+    person: "name3",
+    daysAgo: 13,
+    type: "note",
+    text: "todo subido al doc compartido. mañana dale 🚀",
+    reactions: [
+      { kind: "emoji", content: "🚀" },
+      { kind: "emoji", content: "🙌" },
+    ],
+  },
+  {
+    person: "name4",
+    daysAgo: 13,
+    type: "reflection",
+    did: "- Última call con @JC para alinear quién lleva qué bloque mañana.\n- Decidimos turnarnos para que ninguno se queme en la primera sesión.",
+    learned:
+      "Cofacilitar bien empieza por ponerse de acuerdo en los silencios, no en las palabras.",
+    felt: "🤝",
+    reactions: [
+      { kind: "emoji", content: "🤝" },
+      { kind: "emoji", content: "👏" },
+    ],
+  },
+  {
+    person: "name1",
+    daysAgo: 13,
+    type: "note",
+    text: "mañana arranca el programa de IA. no he hecho nada, oficialmente listo 😎",
+    reactions: [
+      { kind: "emoji", content: "😂" },
+      { kind: "emoji", content: "🤝" },
+      { kind: "gif", content: G.carell, w: 358, h: 200 },
+    ],
+  },
+  {
+    person: "name2",
+    daysAgo: 13,
+    type: "note",
+    text: "leídos los enlaces que mandaron @JC y @Ale Morales. mañana quiero llegar con preguntas, no en blanco.",
+    reactions: [
+      { kind: "emoji", content: "👀" },
+      { kind: "emoji", content: "💯" },
+    ],
+  },
+
   // ─── 12 days ago — Mon, kickoff ───────────────────────────────────────
   {
     person: "name3",
@@ -711,6 +804,38 @@ const SEEDS_TEAM_EXTRA: Seed[] = [
     reactions: [
       { kind: "emoji", content: "🛌" },
       { kind: "gif", content: G.pam, w: 200, h: 200 },
+    ],
+  },
+  {
+    person: "name3",
+    daysAgo: 7,
+    type: "note",
+    text: "weekend mode. el lunes retomamos con sesión 1 con todo el grupo.",
+    reactions: [
+      { kind: "emoji", content: "🛌" },
+      { kind: "emoji", content: "🙌" },
+    ],
+  },
+
+  // ─── 6 days ago — Sun, weekend ───────────────────────────────────────
+  {
+    person: "name1",
+    daysAgo: 6,
+    type: "note",
+    text: "domingo de pasar al limpio los apuntes de la semana. cafetería pequeña, mucho mejor que en casa.",
+    reactions: [
+      { kind: "emoji", content: "📓" },
+      { kind: "emoji", content: "☕" },
+    ],
+  },
+  {
+    person: "name4",
+    daysAgo: 6,
+    type: "note",
+    text: "domingo de descansar la cabeza. mañana sesión 1 con el grupo entero 🚀",
+    reactions: [
+      { kind: "emoji", content: "🚀" },
+      { kind: "emoji", content: "🛌" },
     ],
   },
 
